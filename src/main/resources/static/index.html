@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Abyss Outpost</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-biome="SHALLOWS">
+<div class="app">
+
+  <header>
+    <h1>Abyss Outpost</h1>
+    <span id="link-status" class="status">connecting…</span>
+  </header>
+
+  <main>
+
+    <section id="screen-dock" class="screen active">
+      <div class="dock-grid">
+
+        <form id="dock-form" class="box" autocomplete="off">
+          <h2>Dock</h2>
+
+          <div class="fields">
+            <label>Hull
+              <select id="hull" name="hull">
+                <option value="STEEL">Steel hull</option>
+                <option value="TITANIUM">Titanium hull</option>
+              </select>
+            </label>
+            <label>Engine
+              <select id="engine" name="engine">
+                <option value="STANDARD">Standard engine</option>
+                <option value="EFFICIENT">Efficient engine</option>
+              </select>
+            </label>
+            <label>Light
+              <select id="light" name="light">
+                <option value="HEADLAMP">Headlamp</option>
+                <option value="SEARCHLIGHT">Searchlight</option>
+              </select>
+            </label>
+            <label>Tool
+              <select id="tool" name="tool">
+                <option value="HARPOON">Harpoon</option>
+                <option value="PLASMA_CUTTER">Plasma cutter</option>
+              </select>
+            </label>
+            <label class="wide">Biome
+              <select id="biome" name="biome">
+                <option value="SHALLOWS">Sunlit Shallows</option>
+                <option value="LAVA">Magma Depths</option>
+              </select>
+            </label>
+          </div>
+
+          <fieldset>
+            <legend>Dive tactic</legend>
+            <label class="choice"><input type="radio" name="tactic" value="CAUTIOUS" checked> Cautious: safer, less loot</label>
+            <label class="choice"><input type="radio" name="tactic" value="GREEDY"> Greedy: more loot, more risk, uses more oxygen</label>
+            <label class="choice"><input type="radio" name="tactic" value="STEALTH"> Stealth: best at sneaking past</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Upgrades</legend>
+            <label class="choice"><input type="checkbox" name="upgrade" value="THERMAL"> Thermal plating: more hull, resists heat</label>
+            <label class="choice"><input type="checkbox" name="upgrade" value="FLOOD"> Floodlight: brighter light</label>
+            <label class="choice"><input type="checkbox" name="upgrade" value="DEPTH"> Depth module: dive deeper</label>
+          </fieldset>
+
+          <button id="launch" type="button" class="primary">Launch</button>
+          <p id="dock-error" class="error" hidden></p>
+        </form>
+
+        <aside class="box" id="spec">
+          <h2>Spec sheet</h2>
+          <p id="spec-desc">-</p>
+          <dl>
+            <dt>Hull</dt>            <dd id="spec-hull">-</dd>
+            <dt>Max depth</dt>       <dd id="spec-depth">-</dd>
+            <dt>Oxygen</dt>          <dd id="spec-oxygen">-</dd>
+            <dt>Light</dt>           <dd id="spec-light">-</dd>
+            <dt>Attack</dt>          <dd id="spec-attack">-</dd>
+            <dt>Heat resistance</dt> <dd id="spec-heat">-</dd>
+            <dt>Cost</dt>            <dd id="spec-cost">- / 600</dd>
+          </dl>
+          <div class="bar" id="bar-budget"><i></i></div>
+          <pre id="spec-raw" class="raw" hidden></pre>
+        </aside>
+
+      </div>
+    </section>
+
+    <section id="screen-dive" class="screen">
+
+      <div class="box hud">
+        <div>Depth<strong id="hud-depth">0 m</strong></div>
+        <div>Turn<strong id="hud-turn">0 / 8</strong></div>
+        <div class="grow">Oxygen <span id="hud-oxygen-num">-</span>
+          <div class="bar" id="bar-oxygen"><i></i></div></div>
+        <div class="grow">Hull <span id="hud-hull-num">-</span>
+          <div class="bar" id="bar-hull"><i></i></div></div>
+      </div>
+
+      <div class="box">
+        <div id="encounter-name" class="enc-name">Nothing ahead</div>
+        <div id="encounter-tags"></div>
+      </div>
+
+      <div class="box actions" id="actions">
+        <button data-action="SNEAK" type="button">Sneak</button>
+        <button data-action="FIGHT" type="button">Fight / grab</button>
+        <button data-action="FLEE"  type="button">Flee</button>
+        <span id="tactic-label" class="tactic-label">Tactic: -</span>
+      </div>
+
+      <div class="box">
+        <h2>Log</h2>
+        <div id="log" class="log" role="log" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="screen-debrief" class="screen">
+      <div class="box report">
+        <h2>Debrief</h2>
+        <p id="rep-outcome" class="outcome">-</p>
+        <p class="score">Score: <strong id="rep-score">0</strong></p>
+
+        <dl>
+          <dt>Submarine</dt>     <dd id="rep-sub">-</dd>
+          <dt>Biome</dt>         <dd id="rep-biome">-</dd>
+          <dt>Tactic</dt>        <dd id="rep-tactic">-</dd>
+          <dt>Depth reached</dt> <dd id="rep-depth">-</dd>
+          <dt>Hull left</dt>     <dd id="rep-hull">-</dd>
+          <dt>Oxygen left</dt>   <dd id="rep-oxygen">-</dd>
+          <dt>Loot value</dt>    <dd id="rep-loot">-</dd>
+        </dl>
+
+        <div class="two-col">
+          <div><h3>Creatures met</h3><ul id="rep-creatures"></ul></div>
+          <div><h3>Loot collected</h3><ul id="rep-items"></ul></div>
+        </div>
+
+        <pre id="rep-raw" class="raw" hidden></pre>
+        <button id="again" type="button" class="primary">New dive</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="devbar">
+    Dev:
+    <button type="button" data-go="dock">dock</button>
+    <button type="button" data-go="dive">dive</button>
+    <button type="button" data-go="debrief">debrief</button>
+    <button type="button" id="dev-fake">fill with fake data</button>
+  </footer>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
