@@ -83,11 +83,6 @@ ul { margin: 0; padding-left: 18px; }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
 #again { width: 100%; padding: 10px; }
 
-/* developer bar (delete before the demo) */
-.devbar { position: fixed; left: 0; right: 0; bottom: 0; padding: 6px 10px; background: #fff; border-top: 1px solid #000;
-          font-size: 13px; text-align: center; }
-.devbar button { padding: 2px 8px; font-size: 13px; }
-
 @media (max-width: 700px) {
   .dock-grid, .two-col { grid-template-columns: 1fr; }
   .hud { flex-wrap: wrap; }

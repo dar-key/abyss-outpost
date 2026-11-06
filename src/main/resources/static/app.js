@@ -230,33 +230,5 @@ document.addEventListener('keydown', (e) => {
   if (action) takeAction(action);
 });
 
-/* ---------- developer bar: look at each screen without the backend ----- */
-
-$$('.devbar [data-go]').forEach((b) => b.addEventListener('click', () => show(b.dataset.go)));
-
-$('#dev-fake').addEventListener('click', () => {
-  renderSpec({ description: 'Titanium hull · Efficient engine · Searchlight · Plasma cutter',
-               hull: 100, maxDepth: 450, oxygen: 135, light: 3, attack: 4, heatResistance: 0,
-               cost: 570, budget: 600, affordable: true,
-               warning: 'Not enough oxygen for 8 turns with the Greedy tactic.' });
-  $('#log').replaceChildren();
-  renderState({ biome: 'Magma Depths', biomeId: 'LAVA', tactic: 'Greedy', turn: 5, totalTurns: 8,
-                depth: 250, maxDepth: 450, oxygen: 28, oxygenMax: 135, hull: 54, hullMax: 100, loot: 61,
-                over: false, outcome: 'DIVING',
-                encounter: { kind: 'creature', name: 'Magma Squid', danger: 16, reward: 22 },
-                events: [
-                  { type: 'LOG', level: 'info',   message: 'Launching into the Magma Depths with the Greedy tactic.' },
-                  { type: 'DEPTH', level: 'info',  message: 'Turn 5/8: depth 250 m.' },
-                  { type: 'LOG', level: 'good',   message: 'You snatch the Fire Crystal. +56' },
-                  { type: 'LOG', level: 'warn',   message: 'Oxygen low: 20%' },
-                  { type: 'LOG', level: 'danger', message: 'The Ember Eel gets the better of you: -26 hull.' },
-                  { type: 'LOG', level: 'warn',   message: 'Ahead: Magma Squid.' },
-                ] });
-  renderReport({ outcome: 'SURFACED', score: 168, loot: 61, depth: 400, hullLeft: 54, oxygenLeft: 12, turns: 8,
-                 submarine: 'Titanium hull · Efficient engine · Searchlight · Plasma cutter',
-                 biome: 'Magma Depths', tactic: 'Greedy',
-                 creatures: ['Magma Squid', 'Ember Eel'], items: ['Fire Crystal (+56)', 'Obsidian Shard (+25)'] });
-});
-
 ping();
 refreshSpec();
