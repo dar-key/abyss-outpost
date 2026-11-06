@@ -144,11 +144,88 @@ public class DiveSimulator {
         bus.publish(Event.log("warn", "Ahead: " + current.name() + "."));
     }
 
-    /** Returns true if the dive just ended. Hull is checked first. */
     private boolean checkVitals() {
         if (hull <= 0) { finish("HULL_BREACH", "The hull gives way. Dive over."); return true; }
         if (oxygen <= 0) { finish("OUT_OF_OXYGEN", "The oxygen runs out. Dive over."); return true; }
         return false;
+    }
+
+    public DiveState step(StepRequest req) {
+        if (sub == null) throw new IllegalStateException("No dive in progress. Launch first.");
+        if (over) throw new IllegalStateException("The dive is over.");
+        Action action = parse(Action.class, req.action());
+        resolve(action);
+        if (!over) {
+            if (checkVitals()) {
+            } else if (turn >= TOTAL_TURNS) {
+                finish("SURFACED", "You surface safely.");
+            } else {
+                advance();
+            }
+        }
+        return state();
+    }
+
+    private void resolve(Action action) {
+        Encounter e = current;
+
+        if (action == Action.FLEE) {
+            oxygen -= FLEE_OXYGEN_COST;
+            bus.publish(Event.status("OXYGEN", oxygen, ""));
+            bus.publish(Event.log("info", "You flee from " + e.name() + ". -" + FLEE_OXYGEN_COST + " oxygen."));
+            checkVitals();
+            return;
+        }
+
+        int base = action == Action.SNEAK ? 45 + sub.getLight() * 10 : 35 + sub.getAttack() * 10;
+        int chance = base + tactic.successBonus(action) - e.danger() / 2;
+        chance = Math.max(10, Math.min(95, chance));
+        boolean success = rng.nextInt(100) < chance;
+
+        if (e.kind().equals("creature")) creaturesMet.add(e.name());
+
+        if (success) {
+            double factor = (e.kind().equals("loot") || action == Action.FIGHT) ? 1.0 : 0.0;
+            int gain = (int) Math.round(e.reward() * factor * tactic.lootMultiplier());
+            if (gain > 0) {
+                loot += gain;
+                itemsCollected.add(e.name() + " (+" + gain + ")");
+            }
+            bus.publish(Event.log("good", successMessage(action, e, gain)));
+        } else {
+            double raw = e.danger() * (action == Action.FIGHT ? 1.5 : 1.0) * tactic.damageMultiplier();
+            if (e instanceof Hazard h && h.heat()) {
+                raw *= (100 - sub.getHeatResistance()) / 100.0;   // Thermal plating pays off here
+            }
+            int damage = (int) Math.round(raw);
+            hull -= damage;
+            bus.publish(Event.status("HULL", hull, ""));
+            bus.publish(Event.log("danger", e.name() + " gets the better of you: -" + damage + " hull."));
+        }
+        checkVitals();
+    }
+
+    private String successMessage(Action action, Encounter e, int gain) {
+        if (e.kind().equals("loot")) return "You grab the " + e.name() + ". +" + gain;
+        if (action == Action.FIGHT) return "You beat the " + e.name() + ". +" + gain;
+        return "You slip past the " + e.name() + ".";
+    }
+
+
+    public DiveState state() {
+        if (sub == null) throw new IllegalStateException("No dive in progress. Launch first.");
+        return new DiveState(biome.name(), biome.id(), tactic.name(), turn, TOTAL_TURNS, depth,
+                sub.getMaxDepth(), Math.max(oxygen, 0), oxygenMax, Math.max(hull, 0), hullMax, loot,
+                EncounterView.of(current), over, outcome, log.drain());
+    }
+
+    public Report report() {
+        if (sub == null || !over) throw new IllegalStateException("The dive is not finished yet.");
+        boolean survived = outcome.equals("SURFACED");
+        int score = loot + depth / 10 + Math.max(hull, 0) / 2 + (survived ? 50 : 0);
+        return new Report(outcome, score, loot, depth, Math.max(hull, 0), Math.max(oxygen, 0), turn,
+                sub.getDescription(), biome.name(), tactic.name(),
+                new ArrayList<>(creaturesMet), new ArrayList<>(itemsCollected));
     }
 
     private void finish(String result, String message) {
