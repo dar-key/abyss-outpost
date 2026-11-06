@@ -195,7 +195,7 @@ public class DiveSimulator {
         } else {
             double raw = e.danger() * (action == Action.FIGHT ? 1.5 : 1.0) * tactic.damageMultiplier();
             if (e instanceof Hazard h && h.heat()) {
-                raw *= (100 - sub.getHeatResistance()) / 100.0;   // Thermal plating pays off here
+                raw *= (100 - sub.getHeatResistance()) / 100.0;  
             }
             int damage = (int) Math.round(raw);
             hull -= damage;

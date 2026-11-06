@@ -67,7 +67,6 @@ public class SubmarineBuilder {
         }
     }
 
-    // Default to the cheapest options
     private Hull hull = Hull.STEEL;
     private Engine engine = Engine.STANDARD;
     private Light light = Light.HEADLAMP;
@@ -100,7 +99,7 @@ public class SubmarineBuilder {
         int oxygen = engine.oxygen;
         int lightPower = light.power;
         int attack = tool.attack;
-        int heatResistance = 0; // Base subs start with 0; only Decorators add heat resistance
+        int heatResistance = 0; 
         int totalCost = hull.cost + engine.cost + light.cost + tool.cost;
 
         return new BasicSubmarine(description, maxDepth, hullPoints, oxygen, lightPower, attack, heatResistance, totalCost);

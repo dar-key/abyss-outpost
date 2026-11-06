@@ -1,36 +1,6 @@
-/* ==========================================================================
-   Abyss Outpost: page skeleton script
-
-   Who edits what:
-     P1  renderSpec()   + the Dock form (readDock, spec refresh)
-     P2  renderState()  + the dive screen (bars, encounter, log, action buttons)
-     P3  renderReport() + the debrief screen, and the JSON the backend returns
-
-   Right now the backend is a placeholder and answers {"status":"TODO ..."}.
-   Every render function therefore falls back to printing the raw JSON, so the
-   page works end to end before any pattern exists.
-
-   PROPOSED JSON SHAPES (agree them with P3 before relying on them):
-
-   POST /api/build, response (spec sheet)
-     { description, hull, maxDepth, oxygen, light, attack, heatResistance,
-       cost, budget, affordable, warning }   (warning: text or "")
-
-   POST /api/dive/start and POST /api/dive/step, response (dive state)
-     { biome, biomeId, tactic, turn, totalTurns, depth, maxDepth,
-       oxygen, oxygenMax, hull, hullMax, loot, over, outcome,
-       encounter: { kind, emoji, name, danger, reward } | null,
-       events: [ { type, message, level, value } ] }
-
-   GET /api/report, response (debrief)
-     { outcome, score, loot, depth, hullLeft, oxygenLeft, turns,
-       submarine, biome, tactic, creatures: [..], items: [..] }
-   ========================================================================== */
-
 const $  = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-/* ---------- small helpers ---------------------------------------------- */
 
 function show(name) {
   $$('.screen').forEach((s) => s.classList.toggle('active', s.id === 'screen-' + name));
@@ -50,13 +20,12 @@ function log(message, level = 'info') {
   const box = $('#log');
   const line = document.createElement('div');
   line.className = 'line ' + level;
-  const mark = { warn: '! ', danger: '!! ' };   // plain text marks instead of colours
+  const mark = { warn: '! ', danger: '!! ' };  
   line.textContent = (mark[level] || '') + message;
   box.appendChild(line);
   box.scrollTop = box.scrollHeight;
 }
 
-/* A bar needs --v (0 to 100). Under 30% it turns amber, under 15% red and blinks. */
 function setBar(sel, value, max) {
   const bar = $(sel);
   const pct = max > 0 ? Math.max(0, Math.min(100, Math.round((value * 100) / max))) : 0;
@@ -71,7 +40,6 @@ function showRaw(preSel, data) {
   pre.textContent = JSON.stringify(data, null, 2);
 }
 
-/* ---------- P1: DOCK -------------------------------------------------- */
 
 function readDock() {
   return {
@@ -86,7 +54,7 @@ function readDock() {
 }
 
 function renderSpec(spec) {
-  if (spec.maxDepth === undefined) {          // placeholder backend: show raw JSON
+  if (spec.maxDepth === undefined) {        
     showRaw('#spec-raw', spec);
     return;
   }
@@ -101,7 +69,6 @@ function renderSpec(spec) {
   $('#spec-attack').textContent = spec.attack;
   $('#spec-heat').textContent = spec.heatResistance + '%';
   $('#spec-cost').textContent = spec.cost + ' / ' + spec.budget;
-  // budget bar: the opposite of oxygen, a FULL bar is the danger
   const budget = $('#bar-budget');
   budget.style.setProperty('--v', Math.min(100, Math.round((spec.cost * 100) / spec.budget)));
   budget.classList.toggle('warn', spec.affordable && spec.cost > spec.budget * 0.85);
@@ -118,10 +85,8 @@ function refreshSpec() {
   }, 200);
 }
 
-/* ---------- P2: DIVE -------------------------------------------------- */
-
 function renderState(state) {
-  if (state.depth === undefined) {            // placeholder backend: show raw JSON
+  if (state.depth === undefined) {         
     log(JSON.stringify(state), 'info');
     return;
   }
@@ -154,10 +119,9 @@ async function takeAction(action) {
   }
 }
 
-/* ---------- P3: DEBRIEF ------------------------------------------------ */
 
 function renderReport(r) {
-  if (r.score === undefined) {                // placeholder backend: show raw JSON
+  if (r.score === undefined) {             
     showRaw('#rep-raw', r);
     return;
   }
@@ -190,8 +154,6 @@ async function loadReport() {
   catch (e) { showRaw('#rep-raw', { error: e.message }); }
   show('debrief');
 }
-
-/* ---------- start-up and wiring --------------------------------------- */
 
 async function ping() {
   const chip = $('#link-status');
