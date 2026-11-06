@@ -11,6 +11,7 @@ public final class Upgrades {
             case "THERMAL" -> new ThermalPlating(sub);
             case "FLOOD" -> new Floodlight(sub);
             case "DEPTH" -> new DepthModule(sub);
+            case "SONAR" -> new SonarModule(sub);
             default -> throw new IllegalArgumentException("Unknown upgrade: " + id);
         };
     }

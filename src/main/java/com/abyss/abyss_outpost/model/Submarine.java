@@ -9,4 +9,5 @@ public interface Submarine {
     int getAttack();          
     int getHeatResistance();  
     int getCost();
+    default int getSonar() { return 0; }
 }
