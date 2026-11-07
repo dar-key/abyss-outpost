@@ -13,12 +13,10 @@ public class StealthTactic implements DiveTactic {
         return 11;
     }
 
-    public int successBonus(Action action) {
-        return switch (action) {
-            case SNEAK -> 25;
-            case FIGHT -> -15;
-            case FLEE -> 0;
-        };
+    @Override public int successBonus(Action action) {
+        if (action == Action.SNEAK) return 25;
+        if (action == Action.FIGHT) return -15;
+        return 0;
     }
 
     public double damageMultiplier() {
