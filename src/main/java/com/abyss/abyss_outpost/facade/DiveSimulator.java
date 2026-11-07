@@ -20,7 +20,7 @@ public class DiveSimulator {
     static final int BUDGET = 600;
     static final int FLEE_OXYGEN_COST = 8;
     static final int CRUSH_DAMAGE = 15;
-
+    static final String[] ROUTE_LABELS = {"Left", "Ahead", "Right"};
     private final Random rng;
 
     private Submarine sub;
@@ -31,6 +31,7 @@ public class DiveSimulator {
 
     private int turn, depth, oxygen, oxygenMax, hull, hullMax, loot;
     private Encounter current;
+    private final List<Encounter> routes = new ArrayList<>();
     private boolean over;
     private String outcome = "DIVING";
     private final List<String> creaturesMet = new ArrayList<>();
@@ -114,6 +115,8 @@ public class DiveSimulator {
         outcome = "DIVING";
         creaturesMet.clear();
         itemsCollected.clear();
+        routes.clear();
+        current = null;
 
         bus.publish(Event.log("info", "Launching into the " + biome.name() + " with the " + tactic.name() + " tactic."));
         advance();
@@ -133,15 +136,33 @@ public class DiveSimulator {
         }
         bus.publish(Event.status("HULL", hull, ""));
         if (checkVitals()) return;
-        nextEncounter();
+        offerRoutes();
     }
 
-    private void nextEncounter() {
+        /** Event odds: 40% creature, 25% hazard, 22% loot, 7% air pocket, 6% strong current. */
+    private Encounter rollEncounter() {
         int r = rng.nextInt(100);
-        if (r < 45) current = biome.createCreature();
-        else if (r < 75) current = biome.createHazard();
-        else current = biome.createLoot();
-        bus.publish(Event.log("warn", "Ahead: " + current.name() + "."));
+        if (r < 40) return biome.createCreature();
+        if (r < 65) return biome.createHazard();
+        if (r < 87) return biome.createLoot();
+        if (r < 94) return new Phenomenon("", "Air pocket", Phenomenon.AIR_POCKET);
+        return new Phenomenon("", "Strong current", Phenomenon.CURRENT);
+    }
+
+    private void offerRoutes() {
+        routes.clear();
+        current = null;
+        for (int i = 0; i < ROUTE_COUNT; i++) routes.add(rollEncounter());
+        if (sub.getSonar() > 0) {
+            StringBuilder sb = new StringBuilder("Sonar: ");
+            for (int i = 0; i < ROUTE_COUNT; i++) {
+                sb.append(ROUTE_LABELS[i]).append(" ").append(routes.get(i).name());
+                sb.append(i < ROUTE_COUNT - 1 ? ", " : ".");
+            }
+            bus.publish(Event.log("info", sb.toString()));
+        } else {
+            bus.publish(Event.log("info", "Three routes ahead. Without sonar you cannot tell what is on them."));
+        }
     }
 
     private boolean checkVitals() {
