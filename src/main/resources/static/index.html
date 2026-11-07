@@ -67,6 +67,7 @@
             <label class="choice"><input type="checkbox" name="upgrade" value="THERMAL"> Thermal plating: more hull, resists heat</label>
             <label class="choice"><input type="checkbox" name="upgrade" value="FLOOD"> Floodlight: brighter light</label>
             <label class="choice"><input type="checkbox" name="upgrade" value="DEPTH"> Depth module: dive deeper</label>
+            <label class="choice"><input type="checkbox" name="upgrade" value="SONAR"> Sonar: see what is on each route</label>
           </fieldset>
 
           <button id="launch" type="button" class="primary">Launch</button>
@@ -102,6 +103,11 @@
           <div class="bar" id="bar-oxygen"><i></i></div></div>
         <div class="grow">Hull <span id="hud-hull-num">-</span>
           <div class="bar" id="bar-hull"><i></i></div></div>
+      </div>
+
+      <div class="box" id="routes-box" hidden>
+        <h2>Choose a route</h2>
+        <div class="actions" id="routes"></div>
       </div>
 
       <div class="box">

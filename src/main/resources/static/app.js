@@ -99,15 +99,49 @@ function renderState(state) {
   $('#tactic-label').textContent = 'Tactic: ' + state.tactic + ' · ' + state.biome;
 
   const enc = state.encounter;
-  $('#encounter-name').textContent = enc ? enc.name : 'Nothing ahead';
+  const routes = state.routes || [];
+  renderRoutes(routes, state.over);
+  $('#encounter-name').textContent = enc ? enc.name : (routes.length ? 'Choose a route' : 'Nothing ahead');
   $('#encounter-tags').textContent = enc
     ? [enc.kind, enc.danger > 0 ? 'danger ' + enc.danger : '', enc.reward > 0 ? 'reward ' + enc.reward : '']
         .filter(Boolean).join(' · ')
     : '';
 
   (state.events || []).forEach((ev) => log(ev.message, ev.level));
-  $$('#actions [data-action]').forEach((b) => (b.disabled = state.over));
+    $$('#actions [data-action]').forEach((b) => (b.disabled = state.over || !enc));
 }
+
+function describeRoute(r) {
+  if (r.kind === 'creature') return 'creature, danger ' + r.danger + ', reward ' + r.reward;
+  if (r.kind === 'hazard') return 'hazard, danger ' + r.danger;
+  if (r.kind === 'loot') return 'loot, reward ' + r.reward;
+  return 'event';
+}
+
+function renderRoutes(routes, over) {
+  const holder = $('#routes');
+  holder.replaceChildren();
+  $('#routes-box').hidden = over || routes.length === 0;
+  routes.forEach((r) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = (r.index + 1) + '. ' + r.label + ': ' +
+      (r.known ? r.name + ' (' + describeRoute(r) + ')' : 'unknown');
+    b.addEventListener('click', () => takeRoute(r.index));
+    holder.appendChild(b);
+  });
+}
+
+async function takeRoute(index) {
+  try {
+    const state = await api('/dive/route', { route: index });
+    renderState(state);
+    if (state.over) await loadReport();
+  } catch (e) {
+    log('Error: ' + e.message, 'danger');
+  }
+}
+
 
 async function takeAction(action) {
   try {
@@ -188,6 +222,11 @@ $('#again').addEventListener('click', () => show('dock'));
 
 document.addEventListener('keydown', (e) => {
   if (!$('#screen-dive').classList.contains('active')) return;
+    if (!$('#routes-box').hidden) {               
+    const index = { '1': 0, '2': 1, '3': 2 }[e.key];
+    if (index !== undefined) takeRoute(index);
+    return;
+  }
   const action = { '1': 'SNEAK', '2': 'FIGHT', '3': 'FLEE' }[e.key];
   if (action) takeAction(action);
 });

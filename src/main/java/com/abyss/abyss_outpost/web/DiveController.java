@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.abyss.abyss_outpost.dto.RouteRequest;
 
 import java.util.Map;
 
@@ -45,6 +46,11 @@ public class DiveController {
     @PostMapping("/dive/step")
     public DiveState step(@RequestBody StepRequest request) {
         return simulator.step(request);
+    }
+
+        @PostMapping("/dive/route")
+    public DiveState route(@RequestBody RouteRequest request) {
+        return simulator.chooseRoute(request);
     }
 
     @GetMapping("/report")
