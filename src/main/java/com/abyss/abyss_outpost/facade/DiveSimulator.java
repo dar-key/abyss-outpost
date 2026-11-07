@@ -20,6 +20,9 @@ public class DiveSimulator {
     static final int BUDGET = 600;
     static final int FLEE_OXYGEN_COST = 8;
     static final int CRUSH_DAMAGE = 15;
+    static final int ROUTE_COUNT = 3;
+    static final int AIR_POCKET_OXYGEN = 25;
+    static final int CURRENT_DEPTH = 40;
     static final String[] ROUTE_LABELS = {"Left", "Ahead", "Right"};
     private final Random rng;
 
@@ -84,7 +87,7 @@ public class DiveSimulator {
         pickBiome(c.biome());  
         String warning = "";
         if (s.getOxygen() < t.oxygenPerTurn() * TOTAL_TURNS) {
-            warning = "Not enough oxygen for " + TOTAL_TURNS + " turns with the " + t.name() + " tactic.";
+            warning = "Low oxygen for " + TOTAL_TURNS + " turns with the " + t.name() + " tactic. You will need air pockets.";
         }
         boolean affordable = s.getCost() <= BUDGET;
         if (!affordable) warning = "Over budget: " + s.getCost() + " / " + BUDGET + ".";
@@ -165,25 +168,60 @@ public class DiveSimulator {
         }
     }
 
+    public DiveState chooseRoute(RouteRequest req) {
+        if (sub == null) throw new IllegalStateException("No dive in progress. Launch first.");
+        if (over) throw new IllegalStateException("The dive is over.");
+        if (routes.isEmpty()) throw new IllegalStateException("You already chose a route. Pick an action.");
+        if (req.route() < 0 || req.route() >= routes.size()) {
+            throw new IllegalArgumentException("Unknown route: " + req.route());
+        }
+        Encounter chosen = routes.get(req.route());
+        routes.clear();
+        if (chosen instanceof Phenomenon p) {
+            resolvePhenomenon(p);  
+            endTurn();
+        } else {
+            current = chosen;
+            bus.publish(Event.log("warn", "Ahead: " + chosen.name() + "."));
+        }
+        return state();
+    }
+
+    private void resolvePhenomenon(Phenomenon p) {
+        if (p.type().equals(Phenomenon.AIR_POCKET)) {
+            int gained = Math.min(AIR_POCKET_OXYGEN, oxygenMax - oxygen);
+            oxygen += gained;
+            bus.publish(Event.status("OXYGEN", oxygen, ""));
+            bus.publish(Event.log("good", "You find an air pocket. +" + gained + " oxygen."));
+        } else {
+            depth += CURRENT_DEPTH;
+            oxygen += tactic.oxygenPerTurn();
+            bus.publish(Event.status("DEPTH", depth, ""));
+            bus.publish(Event.status("OXYGEN", oxygen, ""));
+            bus.publish(Event.log("warn", "A strong current carries you " + CURRENT_DEPTH + " m deeper. It saves "
+                    + tactic.oxygenPerTurn() + " oxygen."));
+        }
+    }
+
+    private void endTurn() {
+        if (checkVitals()) return;
+        if (turn >= TOTAL_TURNS) finish("SURFACED", "You surface safely.");
+        else advance();
+    }
+
     private boolean checkVitals() {
         if (hull <= 0) { finish("HULL_BREACH", "The hull gives way. Dive over."); return true; }
         if (oxygen <= 0) { finish("OUT_OF_OXYGEN", "The oxygen runs out. Dive over."); return true; }
         return false;
     }
 
-    public DiveState step(StepRequest req) {
+        public DiveState step(StepRequest req) {
         if (sub == null) throw new IllegalStateException("No dive in progress. Launch first.");
         if (over) throw new IllegalStateException("The dive is over.");
+        if (current == null) throw new IllegalStateException("Choose a route first.");
         Action action = parse(Action.class, req.action());
         resolve(action);
-        if (!over) {
-            if (checkVitals()) {
-            } else if (turn >= TOTAL_TURNS) {
-                finish("SURFACED", "You surface safely.");
-            } else {
-                advance();
-            }
-        }
+        if (!over) endTurn();
         return state();
     }
 
@@ -237,7 +275,19 @@ public class DiveSimulator {
         if (sub == null) throw new IllegalStateException("No dive in progress. Launch first.");
         return new DiveState(biome.name(), biome.id(), tactic.name(), turn, TOTAL_TURNS, depth,
                 sub.getMaxDepth(), Math.max(oxygen, 0), oxygenMax, Math.max(hull, 0), hullMax, loot,
-                EncounterView.of(current), over, outcome, log.drain());
+                EncounterView.of(current), routeViews(), over, outcome, log.drain());
+    }
+
+    private List<RouteView> routeViews() {
+        List<RouteView> views = new ArrayList<>();
+        boolean known = sub.getSonar() > 0;
+        for (int i = 0; i < routes.size(); i++) {
+            Encounter e = routes.get(i);
+            views.add(known
+                    ? new RouteView(i, ROUTE_LABELS[i], e.kind(), e.name(), e.danger(), e.reward(), true)
+                    : new RouteView(i, ROUTE_LABELS[i], "unknown", "Unknown", 0, 0, false));
+        }
+        return views;
     }
 
     public Report report() {
