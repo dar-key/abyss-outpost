@@ -109,7 +109,8 @@ function renderState(state) {
 
   (state.events || []).forEach((ev) => log(ev.message, ev.level));
     $$('#actions [data-action]').forEach((b) => (b.disabled = state.over || !enc));
-}
+  if (window.Instruments) Instruments.update(state);
+  }
 
 function describeRoute(r) {
   if (r.kind === 'creature') return 'creature, danger ' + r.danger + ', reward ' + r.reward;
@@ -135,6 +136,7 @@ function renderRoutes(routes, over) {
 async function takeRoute(index) {
   try {
     const state = await api('/dive/route', { route: index });
+    if (window.Instruments) Instruments.noteRoute(index);
     renderState(state);
     if (state.over) await loadReport();
   } catch (e) {
