@@ -3,6 +3,8 @@ package com.abyss.abyss_outpost.builder;
 import com.abyss.abyss_outpost.model.BasicSubmarine;
 import com.abyss.abyss_outpost.model.Submarine;
 
+import java.util.Objects;
+
 public class SubmarineBuilder {
 
     public enum Hull {
@@ -73,22 +75,30 @@ public class SubmarineBuilder {
     private Tool tool = Tool.HARPOON;
 
     public SubmarineBuilder hull(Hull hull) {
-        this.hull = hull;
+        this.hull = Objects.requireNonNull(hull, "Hull must not be null");
         return this;
     }
 
     public SubmarineBuilder engine(Engine engine) {
-        this.engine = engine;
+        this.engine = Objects.requireNonNull(engine, "Engine must not be null");
         return this;
     }
 
     public SubmarineBuilder light(Light light) {
-        this.light = light;
+        this.light = Objects.requireNonNull(light, "Light must not be null");
         return this;
     }
 
     public SubmarineBuilder tool(Tool tool) {
-        this.tool = tool;
+        this.tool = Objects.requireNonNull(tool, "Tool must not be null");
+        return this;
+    }
+
+    public SubmarineBuilder reset() {
+        this.hull = Hull.STEEL;
+        this.engine = Engine.STANDARD;
+        this.light = Light.HEADLAMP;
+        this.tool = Tool.HARPOON;
         return this;
     }
 
@@ -99,9 +109,10 @@ public class SubmarineBuilder {
         int oxygen = engine.oxygen;
         int lightPower = light.power;
         int attack = tool.attack;
-        int heatResistance = 0; 
+        int heatResistance = 0;
         int totalCost = hull.cost + engine.cost + light.cost + tool.cost;
 
-        return new BasicSubmarine(description, maxDepth, hullPoints, oxygen, lightPower, attack, heatResistance, totalCost);
+        return new BasicSubmarine(description, maxDepth, hullPoints, oxygen, lightPower, attack, heatResistance,
+                totalCost);
     }
 }
