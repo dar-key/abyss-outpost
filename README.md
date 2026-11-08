@@ -1,131 +1,126 @@
-# sdp-final-temp-1
+# Abyss Outpost
 
-Sergey Kim 
-Tilekkali Nurtore
-Nurkhan Karashev
-SE-2540
-# Karashev Nurkhan
+Course: Software Design Patterns (SE-2540)
+
+Team Members:
+
+- Sergey Kim (P1)
+- Nurkhan Karashev (P2)
+- Tilekkali Nurtore (P3)
 
 ## Project Overview
 
-Abyss Outpost is a group project developed in Java using design patterns.
+Abyss Outpost is a turn-based submarine exploration game written in Java using Spring Boot with a web-based CRT dashboard. Players configure a submarine under a budget, pick dive tactics, explore underwater biomes, and manage hull and oxygen levels over an 8-turn dive.
 
-The project is a submarine exploration game where players can choose different diving strategies, explore underwater locations, collect rewards, and face dangers.
+The system integrates 6 GoF design patterns into a single game loop.
 
-Our team uses different design patterns to organize the code and make it easier to maintain and extend.
+## Application Screenshots
 
-## My Contribution — Strategy and Observer
+### Screen 1: Submarine Dock
 
-I was responsible for implementing two design patterns:
+Submarine configuration, component selection, tactic choice, and budget calculations.
 
-1. Strategy Pattern
-2. Observer Pattern
+![Dock Screen](screenshots/dock-screen.png)
 
-I worked on the `feature/strategy-observer` branch and created the required classes and a demo to test their functionality.
+### Screen 2: Dive HUD
 
-## 1. Strategy Pattern
+Live dive screen showing depth, oxygen, hull status, sonar sweep, action buttons, and monitor log alerts.
 
-The Strategy pattern allows the player to choose different diving tactics without changing the main game logic.
+![Dive Screen](screenshots/dive-screen.png)
 
-I implemented three strategies:
+### Screen 3: Debrief
 
-- **CautiousTactic** — uses less oxygen, reduces damage, but gives fewer rewards.
-- **GreedyTactic** — uses more oxygen, increases damage and rewards.
-- **StealthTactic** — provides a higher success bonus for sneaking.
+Mission outcome, final score, resource report, and log of encountered creatures and items.
 
-All three classes implement the `DiveTactic` interface.
+![Debrief Screen](screenshots/debrief-screen.png)
 
-The interface contains five methods:
+## Pattern Distribution
 
-- `name()`
-- `oxygenPerTurn()`
-- `successBonus(Action action)`
-- `damageMultiplier()`
-- `lootMultiplier()`
+| Member                 | Pattern          | Category   | Key Classes                                             |
+| :--------------------- | :--------------- | :--------- | :------------------------------------------------------ |
+| Sergey Kim (P1)        | Builder          | Creational | SubmarineBuilder, BasicSubmarine                        |
+| Sergey Kim (P1)        | Abstract Factory | Creational | BiomeFactory, ShallowsFactory, LavaFactory              |
+| Nurkhan Karashev (P2)  | Strategy         | Behavioral | DiveTactic, CautiousTactic, GreedyTactic, StealthTactic |
+| Nurkhan Karashev (P2)  | Observer         | Behavioral | EventBus, OxygenMonitor, HullMonitor, DepthMonitor      |
+| Tilekkali Nurtore (P3) | Decorator        | Structural | SubUpgrade, DepthModule, SonarModule, ThermalPlating    |
+| Tilekkali Nurtore (P3) | Facade           | Structural | DiveSimulator, DiveController                           |
 
-Each strategy provides different values.
+## Pattern Details and UML Diagrams
 
-## 2. Observer Pattern
+### 1. Builder Pattern (Sergey Kim - P1)
 
-The Observer pattern is used to notify different parts of the game when an event happens.
+`SubmarineBuilder` builds `BasicSubmarine` objects from component parts (Hull, Engine, Light, Tool). It checks for null values, calculates stats (max depth, hull, oxygen, attack), and sums the total component cost.
 
-I implemented five classes:
+![Builder UML](uml/builder.png)
 
-- **EventBus** — manages subscribers and sends events.
-- **LogSubscriber** — collects messages for the game log.
-- **OxygenMonitor** — checks oxygen levels and creates warnings.
-- **HullMonitor** — checks submarine hull condition.
-- **DepthMonitor** — detects when the submarine goes beyond its safe depth.
+### 2. Abstract Factory Pattern (Sergey Kim - P1)
 
-All monitors and the log subscriber implement the `Subscriber` interface.
+`BiomeFactory` creates families of biome encounters (Creature, Hazard, Loot). `ShallowsFactory` generates shallow reef encounters, while `LavaFactory` generates volcanic deep-sea encounters.
 
-The `EventBus` sends events to all registered subscribers.
+![Abstract Factory UML](uml/factory.png)
 
-### Warning Conditions
+### 3. Strategy Pattern (Nurkhan Karashev - P2)
 
-OxygenMonitor:
-- Warning when oxygen is 30% or lower.
-- Critical warning when oxygen is 15% or lower.
+`DiveTactic` defines interchangeable player tactics. `CautiousTactic` saves oxygen, `GreedyTactic` increases loot and risks, and `StealthTactic` boosts sneak chances.
 
-HullMonitor:
-- Warning when hull integrity is 40% or lower.
-- Critical warning when hull integrity is 20% or lower.
+![Strategy UML](uml/strategy.png)
 
-DepthMonitor:
-- Sends one critical warning when depth exceeds the submarine's rated depth.
+### 4. Observer Pattern (Nurkhan Karashev - P2)
 
-## 3. Testing
+`EventBus` receives telemetry events (OXYGEN, HULL, DEPTH). Monitors trigger warnings when thresholds are crossed (oxygen <= 30%, hull <= 40%, or depth > max depth) and pass them to `LogSubscriber`.
 
-I created `P2Demo.java` to check both design patterns.
+![Observer UML](uml/observer.png)
 
-The demo tests:
+### 5. Decorator Pattern (Tilekkali Nurtore - P3)
 
-- Three different diving strategies.
-- Oxygen warnings.
-- Hull warnings.
-- Depth warnings.
-- EventBus notifications.
-- LogSubscriber event collection.
+`SubUpgrade` wraps a `Submarine` instance to stack stats dynamically. Modules include `ThermalPlating` (hull/heat defense), `DepthModule` (max depth), `Floodlight` (visibility), and `SonarModule` (route scouting).
 
-The program successfully produced five alerts in the expected order.
+![Decorator UML](uml/decorator.png)
 
-The second `drain()` returned zero events, showing that the log was cleared correctly.
+### 6. Facade Pattern (Tilekkali Nurtore - P3)
 
-All three strategies returned the expected values.
+`DiveSimulator` provides a single entry point for the REST controller. It manages vessel creation, turn progression, tactical action checks, vital monitoring, and final score reporting.
 
-## 4. Git and GitHub
+![Facade UML](uml/facade.png)
 
-I worked in a separate branch:
+## System Architecture
 
-`feature/strategy-observer`
+The integrated diagram shows how `DiveSimulator` coordinates all 6 patterns:
 
-I used Git commits to track my implementation steps.
+![System Architecture](uml/system-architecture.png)
 
-After completing the implementation, I pushed my branch to GitHub and created a Pull Request for team integration.
+## Verification and Testing
 
-**Pull Request:** https://github.com/dar-key/sdp-final-temp-1/pull/3
+### Unit Tests
 
-## 5. UML Diagrams
+- `SubmarineBuilderTest`: Tests default configurations, custom stats, cost calculation, reset, and null validation.
+- `BiomeFactoryTest`: Tests encounter generation and attributes for Shallows and Lava factories.
+- `AbyssOutpostApplicationTests`: Verifies Spring application context loading.
 
-I created two UML class diagrams:
+### Demo Scripts
 
-UML — Strategy:
+- `P1Demo.java`: Tests SubmarineBuilder configurations and BiomeFactory encounter rolls.
+- `P2Demo.java`: Tests EventBus notifications, staged monitor alerts, and tactic values.
+- `P3Demo.java`: Tests Decorator module stacking on a base submarine.
+- `P3Benchmark.java`: Runs 2,000 automated dives to evaluate survival rates and tactics.
 
-![Strategy UML Diagram](umldiagramma/image.png)
+## How to Run
 
-UML - Observer:
-![Observer UML Diagram](umldiagramma/image-1.png)
+### Start Application
 
-These diagrams show the relationships between the interfaces and their implementations.
+On Linux / macOS:
+./mvnw spring-boot:run
 
-## 6. Conclusion
+On Windows:
+.\mvnw.cmd spring-boot:run
 
-In this group project, I implemented the Strategy and Observer patterns.
+Open in browser: http://localhost:8080
 
-Strategy makes it possible to change diving tactics easily.
+### Run Tests
 
-Observer allows the game to send events and warnings without directly connecting every component.
+./mvnw test
 
-Both patterns help make the game more flexible and easier to extend.
+## Conclusion and Future Work
 
-My implementation was tested using `P2Demo.java` and submitted through a GitHub Pull Request.
+- Results: The project separates vessel building, biome creation, dive tactics, telemetry alerts, and upgrades into distinct, decoupled components using standard design patterns.
+- Future Work: Adding a database for saving player scores, supporting multiple concurrent sessions, and adding new biomes.
