@@ -48,7 +48,7 @@ public class DiveController {
         return simulator.step(request);
     }
 
-        @PostMapping("/dive/route")
+    @PostMapping("/dive/route")
     public DiveState route(@RequestBody RouteRequest request) {
         return simulator.chooseRoute(request);
     }
@@ -58,7 +58,7 @@ public class DiveController {
         return simulator.report();
     }
 
-    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
     public ResponseEntity<Map<String, String>> badRequest(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
     }

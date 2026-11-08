@@ -1,3 +1,5 @@
 package com.abyss.abyss_outpost.model;
 
-public enum Action { SNEAK, FIGHT, FLEE }
+public enum Action {
+    SNEAK, FIGHT, FLEE
+}

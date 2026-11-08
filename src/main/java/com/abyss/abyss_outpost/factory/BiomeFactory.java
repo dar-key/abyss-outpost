@@ -6,9 +6,14 @@ import com.abyss.abyss_outpost.model.Loot;
 
 public interface BiomeFactory {
     String id();
+
     String name();
+
     int depthStep();
+
     Creature createCreature();
+
     Hazard createHazard();
+
     Loot createLoot();
 }

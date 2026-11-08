@@ -12,9 +12,12 @@ public class CautiousTactic implements DiveTactic {
         return 10;
     }
 
-    @Override public int successBonus(Action action) {
-        if (action == Action.SNEAK) return 10;
-        if (action == Action.FIGHT) return -5;
+    @Override
+    public int successBonus(Action action) {
+        if (action == Action.SNEAK)
+            return 10;
+        if (action == Action.FIGHT)
+            return -5;
         return 0;
     }
 

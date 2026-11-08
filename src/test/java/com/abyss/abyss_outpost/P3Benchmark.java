@@ -18,7 +18,8 @@ public class P3Benchmark {
 
     static int route(DiveState s) {
         List<RouteView> routes = s.routes();
-        if (!routes.get(0).known()) return 0;
+        if (!routes.get(0).known())
+            return 0;
         int best = 0;
         double bestValue = -1e9;
         for (RouteView r : routes) {
@@ -26,7 +27,8 @@ public class P3Benchmark {
             switch (r.kind()) {
                 case "loot" -> value = 100 + r.reward();
                 case "event" -> value = r.name().equals("Air pocket")
-                        ? (s.oxygen() * 100 / s.oxygenMax() < 60 ? 90 : 10) : 20;
+                        ? (s.oxygen() * 100 / s.oxygenMax() < 60 ? 90 : 10)
+                        : 20;
                 case "creature" -> value = 50 - r.danger();
                 default -> value = 40 - r.danger();
             }
@@ -40,8 +42,10 @@ public class P3Benchmark {
 
     static String action(DiveState s) {
         EncounterView e = s.encounter();
-        if (e.kind().equals("loot")) return "FIGHT";
-        if (s.hull() < 30 && e.danger() >= 14) return "FLEE";
+        if (e.kind().equals("loot"))
+            return "FIGHT";
+        if (s.hull() < 30 && e.danger() >= 14)
+            return "FLEE";
         return "SNEAK";
     }
 
@@ -71,7 +75,7 @@ public class P3Benchmark {
     }
 
     static DockConfig cfg(String hull, String engine, String light, String tool, List<String> up,
-                          String biome, String tactic) {
+            String biome, String tactic) {
         return new DockConfig(hull, engine, light, tool, up, biome, tactic);
     }
 
@@ -80,7 +84,8 @@ public class P3Benchmark {
         run("A  balanced+Thermal, Shallows",
                 cfg("STEEL", "EFFICIENT", "HEADLAMP", "HARPOON", List.of("THERMAL"), "SHALLOWS", "CAUTIOUS"), n);
         run("A+ same + Sonar",
-                cfg("STEEL", "EFFICIENT", "HEADLAMP", "HARPOON", List.of("THERMAL", "SONAR"), "SHALLOWS", "CAUTIOUS"), n);
+                cfg("STEEL", "EFFICIENT", "HEADLAMP", "HARPOON", List.of("THERMAL", "SONAR"), "SHALLOWS", "CAUTIOUS"),
+                n);
         run("B  cheapest sub, Lava",
                 cfg("STEEL", "STANDARD", "HEADLAMP", "HARPOON", List.of(), "LAVA", "CAUTIOUS"), n);
         run("B+ same + Sonar",

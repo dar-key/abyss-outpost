@@ -21,7 +21,7 @@ public class DepthMonitor implements Subscriber {
         if (event.value() > ratedDepth && !alerted) {
             alerted = true;
             bus.publish(Event.log("danger",
-                "Beyond rated depth (" + ratedDepth + " m)! The hull is taking crush damage."));
+                    "Beyond rated depth (" + ratedDepth + " m)! The hull is taking crush damage."));
         }
     }
 }

@@ -17,17 +17,17 @@ public class P2Demo {
         bus.subscribe(new HullMonitor(bus, 100));
         bus.subscribe(new DepthMonitor(bus, 250));
 
-        int[] oxygen = {80, 30, 25, 10};
+        int[] oxygen = { 80, 30, 25, 10 };
         for (int value : oxygen) {
             bus.publish(Event.status("OXYGEN", value, ""));
         }
 
-        int[] hull = {50, 40, 15};
+        int[] hull = { 50, 40, 15 };
         for (int value : hull) {
             bus.publish(Event.status("HULL", value, ""));
         }
 
-        int[] depth = {245, 280, 315};
+        int[] depth = { 245, 280, 315 };
         for (int value : depth) {
             bus.publish(Event.status("DEPTH", value, ""));
         }
@@ -44,21 +44,20 @@ public class P2Demo {
         System.out.println("-- tactics --");
 
         DiveTactic[] tactics = {
-            new CautiousTactic(),
-            new GreedyTactic(),
-            new StealthTactic()
+                new CautiousTactic(),
+                new GreedyTactic(),
+                new StealthTactic()
         };
 
         for (DiveTactic tactic : tactics) {
             System.out.println(
-                tactic.name() +
-                ": oxygen " + tactic.oxygenPerTurn() +
-                ", damage x" + tactic.damageMultiplier() +
-                ", loot x" + tactic.lootMultiplier() +
-                ", SNEAK " + tactic.successBonus(Action.SNEAK) +
-                " / FIGHT " + tactic.successBonus(Action.FIGHT) +
-                " / FLEE " + tactic.successBonus(Action.FLEE)
-            );
+                    tactic.name() +
+                            ": oxygen " + tactic.oxygenPerTurn() +
+                            ", damage x" + tactic.damageMultiplier() +
+                            ", loot x" + tactic.lootMultiplier() +
+                            ", SNEAK " + tactic.successBonus(Action.SNEAK) +
+                            " / FIGHT " + tactic.successBonus(Action.FIGHT) +
+                            " / FLEE " + tactic.successBonus(Action.FLEE));
         }
     }
 }

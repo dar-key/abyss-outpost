@@ -4,7 +4,8 @@ import com.abyss.abyss_outpost.model.Submarine;
 
 public final class Upgrades {
 
-    private Upgrades() { }
+    private Upgrades() {
+    }
 
     public static Submarine apply(Submarine sub, String id) {
         return switch (id) {

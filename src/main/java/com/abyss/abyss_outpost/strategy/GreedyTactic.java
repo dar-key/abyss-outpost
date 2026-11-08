@@ -13,9 +13,12 @@ public class GreedyTactic implements DiveTactic {
         return 13;
     }
 
-    @Override public int successBonus(Action action) {
-        if (action == Action.SNEAK) return -10;
-        if (action == Action.FIGHT) return 15;
+    @Override
+    public int successBonus(Action action) {
+        if (action == Action.SNEAK)
+            return -10;
+        if (action == Action.FIGHT)
+            return 15;
         return 0;
     }
 

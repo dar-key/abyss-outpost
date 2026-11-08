@@ -11,20 +11,17 @@ public class ShallowsFactory implements BiomeFactory {
     private static final List<Creature> CREATURES = List.of(
             new Creature("🐟", "Reef Piranha", 8, 10),
             new Creature("🦀", "Armored Crab", 10, 14),
-            new Creature("🦈", "Reef Shark", 18, 25)
-    );
+            new Creature("🦈", "Reef Shark", 18, 25));
 
     private static final List<Hazard> HAZARDS = List.of(
             new Hazard("🌊", "Strong Current", 8, false),
             new Hazard("🪸", "Sharp Coral", 10, false),
-            new Hazard("🕸️", "Abandoned Net", 6, false)
-    );
+            new Hazard("🕸️", "Abandoned Net", 6, false));
 
     private static final List<Loot> LOOT = List.of(
             new Loot("🐚", "Pearl Shell", 15),
             new Loot("⚙️", "Wreck Scrap", 10),
-            new Loot("📦", "Supply Crate", 20)
-    );
+            new Loot("📦", "Supply Crate", 20));
 
     @Override
     public String id() {

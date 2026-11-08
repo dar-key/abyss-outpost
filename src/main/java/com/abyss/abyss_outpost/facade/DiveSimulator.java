@@ -23,7 +23,7 @@ public class DiveSimulator {
     static final int ROUTE_COUNT = 3;
     static final int AIR_POCKET_OXYGEN = 25;
     static final int CURRENT_DEPTH = 40;
-    static final String[] ROUTE_LABELS = {"Left", "Ahead", "Right"};
+    static final String[] ROUTE_LABELS = { "Left", "Ahead", "Right" };
     private final Random rng;
 
     private Submarine sub;
@@ -40,8 +40,13 @@ public class DiveSimulator {
     private final List<String> creaturesMet = new ArrayList<>();
     private final List<String> itemsCollected = new ArrayList<>();
 
-    public DiveSimulator() { this(new Random()); }
-    public DiveSimulator(Random rng) { this.rng = rng; }
+    public DiveSimulator() {
+        this(new Random());
+    }
+
+    public DiveSimulator(Random rng) {
+        this.rng = rng;
+    }
 
     private static <E extends Enum<E>> E parse(Class<E> type, String value) {
         try {
@@ -59,7 +64,8 @@ public class DiveSimulator {
                 .tool(parse(SubmarineBuilder.Tool.class, c.tool()))
                 .build();
         if (c.upgrades() != null) {
-            for (String id : c.upgrades()) s = Upgrades.apply(s, id);
+            for (String id : c.upgrades())
+                s = Upgrades.apply(s, id);
         }
         return s;
     }
@@ -84,13 +90,14 @@ public class DiveSimulator {
     public SubSpec preview(DockConfig c) {
         Submarine s = buildSub(c);
         DiveTactic t = pickTactic(c.tactic());
-        pickBiome(c.biome());  
+        pickBiome(c.biome());
         String warning = "";
         if (s.getOxygen() < t.oxygenPerTurn() * TOTAL_TURNS) {
-        warning = "Oxygen is tight with this tactic.";
+            warning = "Oxygen is tight with this tactic.";
         }
         boolean affordable = s.getCost() <= BUDGET;
-        if (!affordable) warning = "Over budget: " + s.getCost() + " / " + BUDGET + ".";
+        if (!affordable)
+            warning = "Over budget: " + s.getCost() + " / " + BUDGET + ".";
         return new SubSpec(s.getDescription(), s.getHull(), s.getMaxDepth(), s.getOxygen(), s.getLight(),
                 s.getAttack(), s.getHeatResistance(), s.getCost(), BUDGET, affordable, warning);
     }
@@ -111,7 +118,9 @@ public class DiveSimulator {
         bus.subscribe(new HullMonitor(bus, sub.getHull()));
         bus.subscribe(new DepthMonitor(bus, sub.getMaxDepth()));
 
-        turn = 0; depth = 0; loot = 0;
+        turn = 0;
+        depth = 0;
+        loot = 0;
         oxygen = oxygenMax = sub.getOxygen();
         hull = hullMax = sub.getHull();
         over = false;
@@ -121,7 +130,8 @@ public class DiveSimulator {
         routes.clear();
         current = null;
 
-        bus.publish(Event.log("info", "Launching into the " + biome.name() + " with the " + tactic.name() + " tactic."));
+        bus.publish(
+                Event.log("info", "Launching into the " + biome.name() + " with the " + tactic.name() + " tactic."));
         advance();
         return state();
     }
@@ -138,23 +148,29 @@ public class DiveSimulator {
             bus.publish(Event.log("danger", "Crush damage: -" + CRUSH_DAMAGE + " hull."));
         }
         bus.publish(Event.status("HULL", hull, ""));
-        if (checkVitals()) return;
+        if (checkVitals())
+            return;
         offerRoutes();
     }
 
     private Encounter rollEncounter() {
         int r = rng.nextInt(100);
-        if (r < 40) return biome.createCreature();
-        if (r < 65) return biome.createHazard();
-        if (r < 87) return biome.createLoot();
-        if (r < 94) return new Phenomenon("", "Air pocket", Phenomenon.AIR_POCKET);
+        if (r < 40)
+            return biome.createCreature();
+        if (r < 65)
+            return biome.createHazard();
+        if (r < 87)
+            return biome.createLoot();
+        if (r < 94)
+            return new Phenomenon("", "Air pocket", Phenomenon.AIR_POCKET);
         return new Phenomenon("", "Strong current", Phenomenon.CURRENT);
     }
 
     private void offerRoutes() {
         routes.clear();
         current = null;
-        for (int i = 0; i < ROUTE_COUNT; i++) routes.add(rollEncounter());
+        for (int i = 0; i < ROUTE_COUNT; i++)
+            routes.add(rollEncounter());
         if (sub.getSonar() > 0) {
             StringBuilder sb = new StringBuilder("Sonar: ");
             for (int i = 0; i < ROUTE_COUNT; i++) {
@@ -168,16 +184,19 @@ public class DiveSimulator {
     }
 
     public DiveState chooseRoute(RouteRequest req) {
-        if (sub == null) throw new IllegalStateException("No dive in progress. Launch first.");
-        if (over) throw new IllegalStateException("The dive is over.");
-        if (routes.isEmpty()) throw new IllegalStateException("You already chose a route. Pick an action.");
+        if (sub == null)
+            throw new IllegalStateException("No dive in progress. Launch first.");
+        if (over)
+            throw new IllegalStateException("The dive is over.");
+        if (routes.isEmpty())
+            throw new IllegalStateException("You already chose a route. Pick an action.");
         if (req.route() < 0 || req.route() >= routes.size()) {
             throw new IllegalArgumentException("Unknown route: " + req.route());
         }
         Encounter chosen = routes.get(req.route());
         routes.clear();
         if (chosen instanceof Phenomenon p) {
-            resolvePhenomenon(p);  
+            resolvePhenomenon(p);
             endTurn();
         } else {
             current = chosen;
@@ -203,24 +222,37 @@ public class DiveSimulator {
     }
 
     private void endTurn() {
-        if (checkVitals()) return;
-        if (turn >= TOTAL_TURNS) finish("SURFACED", "You surface safely.");
-        else advance();
+        if (checkVitals())
+            return;
+        if (turn >= TOTAL_TURNS)
+            finish("SURFACED", "You surface safely.");
+        else
+            advance();
     }
 
     private boolean checkVitals() {
-        if (hull <= 0) { finish("HULL_BREACH", "The hull gives way. Dive over."); return true; }
-        if (oxygen <= 0) { finish("OUT_OF_OXYGEN", "The oxygen runs out. Dive over."); return true; }
+        if (hull <= 0) {
+            finish("HULL_BREACH", "The hull gives way. Dive over.");
+            return true;
+        }
+        if (oxygen <= 0) {
+            finish("OUT_OF_OXYGEN", "The oxygen runs out. Dive over.");
+            return true;
+        }
         return false;
     }
 
-        public DiveState step(StepRequest req) {
-        if (sub == null) throw new IllegalStateException("No dive in progress. Launch first.");
-        if (over) throw new IllegalStateException("The dive is over.");
-        if (current == null) throw new IllegalStateException("Choose a route first.");
+    public DiveState step(StepRequest req) {
+        if (sub == null)
+            throw new IllegalStateException("No dive in progress. Launch first.");
+        if (over)
+            throw new IllegalStateException("The dive is over.");
+        if (current == null)
+            throw new IllegalStateException("Choose a route first.");
         Action action = parse(Action.class, req.action());
         resolve(action);
-        if (!over) endTurn();
+        if (!over)
+            endTurn();
         return state();
     }
 
@@ -240,7 +272,8 @@ public class DiveSimulator {
         chance = Math.max(10, Math.min(95, chance));
         boolean success = rng.nextInt(100) < chance;
 
-        if (e.kind().equals("creature")) creaturesMet.add(e.name());
+        if (e.kind().equals("creature"))
+            creaturesMet.add(e.name());
 
         if (success) {
             double factor = (e.kind().equals("loot") || action == Action.FIGHT) ? 1.0 : 0.0;
@@ -253,7 +286,7 @@ public class DiveSimulator {
         } else {
             double raw = e.danger() * (action == Action.FIGHT ? 1.5 : 1.0) * tactic.damageMultiplier();
             if (e instanceof Hazard h && h.heat()) {
-                raw *= (100 - sub.getHeatResistance()) / 100.0;  
+                raw *= (100 - sub.getHeatResistance()) / 100.0;
             }
             int damage = (int) Math.round(raw);
             hull -= damage;
@@ -264,14 +297,16 @@ public class DiveSimulator {
     }
 
     private String successMessage(Action action, Encounter e, int gain) {
-        if (e.kind().equals("loot")) return "You grab the " + e.name() + ". +" + gain;
-        if (action == Action.FIGHT) return "You beat the " + e.name() + ". +" + gain;
+        if (e.kind().equals("loot"))
+            return "You grab the " + e.name() + ". +" + gain;
+        if (action == Action.FIGHT)
+            return "You beat the " + e.name() + ". +" + gain;
         return "You slip past the " + e.name() + ".";
     }
 
-
     public DiveState state() {
-        if (sub == null) throw new IllegalStateException("No dive in progress. Launch first.");
+        if (sub == null)
+            throw new IllegalStateException("No dive in progress. Launch first.");
         return new DiveState(biome.name(), biome.id(), tactic.name(), turn, TOTAL_TURNS, depth,
                 sub.getMaxDepth(), Math.max(oxygen, 0), oxygenMax, Math.max(hull, 0), hullMax, loot,
                 EncounterView.of(current), routeViews(), over, outcome, log.drain());
@@ -290,7 +325,8 @@ public class DiveSimulator {
     }
 
     public Report report() {
-        if (sub == null || !over) throw new IllegalStateException("The dive is not finished yet.");
+        if (sub == null || !over)
+            throw new IllegalStateException("The dive is not finished yet.");
         boolean survived = outcome.equals("SURFACED");
         int score = loot + depth / 10 + Math.max(hull, 0) / 2 + (survived ? 50 : 0);
         return new Report(outcome, score, loot, depth, Math.max(hull, 0), Math.max(oxygen, 0), turn,

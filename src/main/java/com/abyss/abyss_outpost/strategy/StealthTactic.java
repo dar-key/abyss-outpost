@@ -13,9 +13,12 @@ public class StealthTactic implements DiveTactic {
         return 11;
     }
 
-    @Override public int successBonus(Action action) {
-        if (action == Action.SNEAK) return 25;
-        if (action == Action.FIGHT) return -15;
+    @Override
+    public int successBonus(Action action) {
+        if (action == Action.SNEAK)
+            return 25;
+        if (action == Action.FIGHT)
+            return -15;
         return 0;
     }
 

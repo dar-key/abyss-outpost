@@ -1,208 +1,277 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Abyss Outpost</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body data-biome="SHALLOWS">
-<div class="app">
-
-  <header class="plate">
-    <div>
-      <h1>Abyss Outpost</h1>
-    </div>
-    <div class="head-right">
-      <span id="link-status" class="status">connecting…</span>
-    </div>
-  </header>
-
-  <main>
-
-    <!-- SCREEN 1: DOCK (owner: P1) -->
-    <section id="screen-dock" class="screen active">
-      <div class="dock-grid">
-
-        <form id="dock-form" class="panel" autocomplete="off">
-          <h2>Dock</h2>
-
-          <div class="fields">
-            <label>Hull
-              <select id="hull" name="hull">
-                <option value="STEEL">Steel hull</option>
-                <option value="TITANIUM">Titanium hull</option>
-              </select>
-            </label>
-            <label>Engine
-              <select id="engine" name="engine">
-                <option value="STANDARD">Standard engine</option>
-                <option value="EFFICIENT">Efficient engine</option>
-              </select>
-            </label>
-            <label>Light
-              <select id="light" name="light">
-                <option value="HEADLAMP">Headlamp</option>
-                <option value="SEARCHLIGHT">Searchlight</option>
-              </select>
-            </label>
-            <label>Tool
-              <select id="tool" name="tool">
-                <option value="HARPOON">Harpoon</option>
-                <option value="PLASMA_CUTTER">Plasma cutter</option>
-              </select>
-            </label>
-            <label class="wide">Biome
-              <select id="biome" name="biome">
-                <option value="SHALLOWS">Sunlit Shallows</option>
-                <option value="LAVA">Magma Depths</option>
-              </select>
-            </label>
-          </div>
-
-          <fieldset>
-            <legend>Dive tactic</legend>
-            <label class="choice lamp"><input type="radio" name="tactic" value="CAUTIOUS" checked> Cautious: safer, less loot</label>
-            <label class="choice lamp"><input type="radio" name="tactic" value="GREEDY"> Greedy: more loot, more risk, uses more oxygen</label>
-            <label class="choice lamp"><input type="radio" name="tactic" value="STEALTH"> Stealth: best at sneaking past</label>
-          </fieldset>
-
-          <fieldset>
-            <legend>Upgrades</legend>
-            <label class="choice switch"><input type="checkbox" name="upgrade" value="THERMAL"> Thermal plating: more hull, resists heat</label>
-            <label class="choice switch"><input type="checkbox" name="upgrade" value="FLOOD"> Floodlight: brighter light</label>
-            <label class="choice switch"><input type="checkbox" name="upgrade" value="DEPTH"> Depth module: dive deeper</label>
-            <label class="choice switch"><input type="checkbox" name="upgrade" value="SONAR"> Sonar: see what is on each route</label>
-          </fieldset>
-
-          <button id="launch" type="button" class="primary">Launch</button>
-          <p id="dock-error" class="error" hidden></p>
-        </form>
-
-        <aside class="panel" id="spec">
-          <h2>Spec sheet</h2>
-          <p id="spec-desc" class="crt readout">-</p>
-          <p id="spec-warning" class="notice" hidden></p>
-          <dl>
-            <dt>Hull</dt>            <dd id="spec-hull">-</dd>
-            <dt>Max depth</dt>       <dd id="spec-depth">-</dd>
-            <dt>Oxygen</dt>          <dd id="spec-oxygen">-</dd>
-            <dt>Light</dt>           <dd id="spec-light">-</dd>
-            <dt>Attack</dt>          <dd id="spec-attack">-</dd>
-            <dt>Heat resistance</dt> <dd id="spec-heat">-</dd>
-            <dt>Cost</dt>            <dd id="spec-cost">- / 600</dd>
-          </dl>
-          <div class="bar" id="bar-budget"><i></i></div>
-          <pre id="spec-raw" class="raw" hidden></pre>
-        </aside>
-
-      </div>
-    </section>
-
-    <!-- SCREEN 2: DIVE (owner: P2) -->
-    <section id="screen-dive" class="screen">
-      <div class="dive-grid">
-
-        <div class="col col-sonar">
-          <div class="panel sonar-panel">
-            <h2>Sonar</h2>
-            <div class="scope"><canvas id="sonar" aria-label="Sonar display"></canvas></div>
-            <p class="scope-note">Range 100 m. Closer means more dangerous.</p>
-          </div>
-          <div class="panel">
-            <h2>Contact list</h2>
-            <div id="contact-list" class="contact-list crt">no contact</div>
-          </div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Abyss Outpost</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-biome="SHALLOWS">
+    <div class="app">
+      <header class="plate">
+        <div>
+          <h1>Abyss Outpost</h1>
         </div>
-
-        <div class="col col-main">
-          <div class="panel hud">
-            <div class="cell">Depth<strong id="hud-depth" class="lcd">0 m</strong></div>
-            <div class="cell">Turn<strong id="hud-turn" class="lcd">0 / 8</strong></div>
-            <div class="cell grow">Oxygen <span id="hud-oxygen-num" class="lcd-sm">-</span>
-              <div class="bar" id="bar-oxygen"><i></i></div></div>
-            <div class="cell grow">Hull <span id="hud-hull-num" class="lcd-sm">-</span>
-              <div class="bar" id="bar-hull"><i></i></div></div>
-          </div>
-
-          <div class="panel" id="routes-box" hidden>
-            <h2>Choose a route</h2>
-            <div class="actions" id="routes"></div>
-          </div>
-
-          <div class="panel">
-            <div id="encounter-name" class="enc-name crt readout">Nothing ahead</div>
-            <div id="encounter-tags" class="enc-tags"></div>
-          </div>
-
-          <div class="panel actions" id="actions">
-            <button data-action="SNEAK" type="button"><b>1</b> Sneak</button>
-            <button data-action="FIGHT" type="button"><b>2</b> Fight / grab</button>
-            <button data-action="FLEE"  type="button"><b>3</b> Flee</button>
-            <span id="tactic-label" class="tactic-label">Tactic: -</span>
-          </div>
-
-          <div class="panel">
-            <h2>Log</h2>
-            <div id="log" class="log crt" role="log" aria-live="polite"></div>
-          </div>
+        <div class="head-right">
+          <span id="link-status" class="status">connecting…</span>
         </div>
+      </header>
 
-        <div class="col col-ins">
-          <aside class="panel instruments">
-            <h2>Instruments</h2>
-            <div class="gauges">
-              <figure><div class="gauge" id="gauge-depth"></div><figcaption>Depth, m</figcaption></figure>
-              <figure><div class="gauge" id="gauge-oxygen"></div><figcaption>Oxygen</figcaption></figure>
+      <main>
+        <!-- SCREEN 1: DOCK (owner: P1) -->
+        <section id="screen-dock" class="screen active">
+          <div class="dock-grid">
+            <form id="dock-form" class="panel" autocomplete="off">
+              <h2>Dock</h2>
+
+              <div class="fields">
+                <label
+                  >Hull
+                  <select id="hull" name="hull">
+                    <option value="STEEL">Steel hull</option>
+                    <option value="TITANIUM">Titanium hull</option>
+                  </select>
+                </label>
+                <label
+                  >Engine
+                  <select id="engine" name="engine">
+                    <option value="STANDARD">Standard engine</option>
+                    <option value="EFFICIENT">Efficient engine</option>
+                  </select>
+                </label>
+                <label
+                  >Light
+                  <select id="light" name="light">
+                    <option value="HEADLAMP">Headlamp</option>
+                    <option value="SEARCHLIGHT">Searchlight</option>
+                  </select>
+                </label>
+                <label
+                  >Tool
+                  <select id="tool" name="tool">
+                    <option value="HARPOON">Harpoon</option>
+                    <option value="PLASMA_CUTTER">Plasma cutter</option>
+                  </select>
+                </label>
+                <label class="wide"
+                  >Biome
+                  <select id="biome" name="biome">
+                    <option value="SHALLOWS">Sunlit Shallows</option>
+                    <option value="LAVA">Magma Depths</option>
+                  </select>
+                </label>
+              </div>
+
+              <fieldset>
+                <legend>Dive tactic</legend>
+                <label class="choice lamp"
+                  ><input type="radio" name="tactic" value="CAUTIOUS" checked />
+                  Cautious: safer, less loot</label
+                >
+                <label class="choice lamp"
+                  ><input type="radio" name="tactic" value="GREEDY" /> Greedy:
+                  more loot, more risk, uses more oxygen</label
+                >
+                <label class="choice lamp"
+                  ><input type="radio" name="tactic" value="STEALTH" /> Stealth:
+                  best at sneaking past</label
+                >
+              </fieldset>
+
+              <fieldset>
+                <legend>Upgrades</legend>
+                <label class="choice switch"
+                  ><input type="checkbox" name="upgrade" value="THERMAL" />
+                  Thermal plating: more hull, resists heat</label
+                >
+                <label class="choice switch"
+                  ><input type="checkbox" name="upgrade" value="FLOOD" />
+                  Floodlight: brighter light</label
+                >
+                <label class="choice switch"
+                  ><input type="checkbox" name="upgrade" value="DEPTH" /> Depth
+                  module: dive deeper</label
+                >
+                <label class="choice switch"
+                  ><input type="checkbox" name="upgrade" value="SONAR" /> Sonar:
+                  see what is on each route</label
+                >
+              </fieldset>
+
+              <button id="launch" type="button" class="primary">Launch</button>
+              <p id="dock-error" class="error" hidden></p>
+            </form>
+
+            <aside class="panel" id="spec">
+              <h2>Spec sheet</h2>
+              <p id="spec-desc" class="crt readout">-</p>
+              <p id="spec-warning" class="notice" hidden></p>
+              <dl>
+                <dt>Hull</dt>
+                <dd id="spec-hull">-</dd>
+                <dt>Max depth</dt>
+                <dd id="spec-depth">-</dd>
+                <dt>Oxygen</dt>
+                <dd id="spec-oxygen">-</dd>
+                <dt>Light</dt>
+                <dd id="spec-light">-</dd>
+                <dt>Attack</dt>
+                <dd id="spec-attack">-</dd>
+                <dt>Heat resistance</dt>
+                <dd id="spec-heat">-</dd>
+                <dt>Cost</dt>
+                <dd id="spec-cost">- / 600</dd>
+              </dl>
+              <div class="bar" id="bar-budget"><i></i></div>
+              <pre id="spec-raw" class="raw" hidden></pre>
+            </aside>
+          </div>
+        </section>
+
+        <!-- SCREEN 2: DIVE (owner: P2) -->
+        <section id="screen-dive" class="screen">
+          <div class="dive-grid">
+            <div class="col col-sonar">
+              <div class="panel sonar-panel">
+                <h2>Sonar</h2>
+                <div class="scope">
+                  <canvas id="sonar" aria-label="Sonar display"></canvas>
+                </div>
+                <p class="scope-note">
+                  Range 100 m. Closer means more dangerous.
+                </p>
+              </div>
+              <div class="panel">
+                <h2>Contact list</h2>
+                <div id="contact-list" class="contact-list crt">no contact</div>
+              </div>
             </div>
-            <ul class="lamps">
-              <li id="lamp-oxygen"><i></i>O2</li>
-              <li id="lamp-hull"><i></i>Hull</li>
-              <li id="lamp-depth"><i></i>Depth</li>
-              <li id="lamp-sonar"><i></i>Sonar</li>
-            </ul>
-          </aside>
-        </div>
 
-      </div>
-    </section>
+            <div class="col col-main">
+              <div class="panel hud">
+                <div class="cell">
+                  Depth<strong id="hud-depth" class="lcd">0 m</strong>
+                </div>
+                <div class="cell">
+                  Turn<strong id="hud-turn" class="lcd">0 / 8</strong>
+                </div>
+                <div class="cell grow">
+                  Oxygen <span id="hud-oxygen-num" class="lcd-sm">-</span>
+                  <div class="bar" id="bar-oxygen"><i></i></div>
+                </div>
+                <div class="cell grow">
+                  Hull <span id="hud-hull-num" class="lcd-sm">-</span>
+                  <div class="bar" id="bar-hull"><i></i></div>
+                </div>
+              </div>
 
-    <!-- SCREEN 3: DEBRIEF (owner: P3) -->
-    <section id="screen-debrief" class="screen">
-      <div class="panel report">
-        <h2>Debrief</h2>
-        <p id="rep-outcome" class="outcome crt readout">-</p>
-        <p class="score"><span>Score</span> <strong id="rep-score" class="lcd">0</strong></p>
+              <div class="panel" id="routes-box" hidden>
+                <h2>Choose a route</h2>
+                <div class="actions" id="routes"></div>
+              </div>
 
-        <dl>
-          <dt>Depth reached</dt> <dd id="rep-depth">-</dd>
-          <dt>Hull left</dt>     <dd id="rep-hull">-</dd>
-          <dt>Oxygen left</dt>   <dd id="rep-oxygen">-</dd>
-          <dt>Loot value</dt>    <dd id="rep-loot">-</dd>
-        </dl>
+              <div class="panel">
+                <div id="encounter-name" class="enc-name crt readout">
+                  Nothing ahead
+                </div>
+                <div id="encounter-tags" class="enc-tags"></div>
+              </div>
 
-        <details class="more">
-          <summary>More details</summary>
-          <dl>
-            <dt>Submarine</dt> <dd id="rep-sub">-</dd>
-            <dt>Biome</dt>     <dd id="rep-biome">-</dd>
-            <dt>Tactic</dt>    <dd id="rep-tactic">-</dd>
-          </dl>
-          <div class="two-col">
-            <div><h3>Creatures met</h3><ul id="rep-creatures"></ul></div>
-            <div><h3>Loot collected</h3><ul id="rep-items"></ul></div>
+              <div class="panel actions" id="actions">
+                <button data-action="SNEAK" type="button">
+                  <b>1</b> Sneak
+                </button>
+                <button data-action="FIGHT" type="button">
+                  <b>2</b> Fight / grab
+                </button>
+                <button data-action="FLEE" type="button"><b>3</b> Flee</button>
+                <span id="tactic-label" class="tactic-label">Tactic: -</span>
+              </div>
+
+              <div class="panel">
+                <h2>Log</h2>
+                <div
+                  id="log"
+                  class="log crt"
+                  role="log"
+                  aria-live="polite"
+                ></div>
+              </div>
+            </div>
+
+            <div class="col col-ins">
+              <aside class="panel instruments">
+                <h2>Instruments</h2>
+                <div class="gauges">
+                  <figure>
+                    <div class="gauge" id="gauge-depth"></div>
+                    <figcaption>Depth, m</figcaption>
+                  </figure>
+                  <figure>
+                    <div class="gauge" id="gauge-oxygen"></div>
+                    <figcaption>Oxygen</figcaption>
+                  </figure>
+                </div>
+                <ul class="lamps">
+                  <li id="lamp-oxygen"><i></i>O2</li>
+                  <li id="lamp-hull"><i></i>Hull</li>
+                  <li id="lamp-depth"><i></i>Depth</li>
+                  <li id="lamp-sonar"><i></i>Sonar</li>
+                </ul>
+              </aside>
+            </div>
           </div>
-        </details>
+        </section>
 
-        <pre id="rep-raw" class="raw" hidden></pre>
-        <button id="again" type="button" class="primary">New dive</button>
-      </div>
-    </section>
+        <!-- SCREEN 3: DEBRIEF (owner: P3) -->
+        <section id="screen-debrief" class="screen">
+          <div class="panel report">
+            <h2>Debrief</h2>
+            <p id="rep-outcome" class="outcome crt readout">-</p>
+            <p class="score">
+              <span>Score</span> <strong id="rep-score" class="lcd">0</strong>
+            </p>
 
-  </main>
+            <dl>
+              <dt>Depth reached</dt>
+              <dd id="rep-depth">-</dd>
+              <dt>Hull left</dt>
+              <dd id="rep-hull">-</dd>
+              <dt>Oxygen left</dt>
+              <dd id="rep-oxygen">-</dd>
+              <dt>Loot value</dt>
+              <dd id="rep-loot">-</dd>
+            </dl>
 
-</div>
-<script src="app.js"></script>
-<script src="instruments.js"></script>
-</body>
+            <details class="more">
+              <summary>More details</summary>
+              <dl>
+                <dt>Submarine</dt>
+                <dd id="rep-sub">-</dd>
+                <dt>Biome</dt>
+                <dd id="rep-biome">-</dd>
+                <dt>Tactic</dt>
+                <dd id="rep-tactic">-</dd>
+              </dl>
+              <div class="two-col">
+                <div>
+                  <h3>Creatures met</h3>
+                  <ul id="rep-creatures"></ul>
+                </div>
+                <div>
+                  <h3>Loot collected</h3>
+                  <ul id="rep-items"></ul>
+                </div>
+              </div>
+            </details>
+
+            <pre id="rep-raw" class="raw" hidden></pre>
+            <button id="again" type="button" class="primary">New dive</button>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="app.js"></script>
+    <script src="instruments.js"></script>
+  </body>
 </html>
