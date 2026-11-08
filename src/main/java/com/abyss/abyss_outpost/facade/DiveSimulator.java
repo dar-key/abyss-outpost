@@ -87,7 +87,7 @@ public class DiveSimulator {
         pickBiome(c.biome());  
         String warning = "";
         if (s.getOxygen() < t.oxygenPerTurn() * TOTAL_TURNS) {
-            warning = "Low oxygen for " + TOTAL_TURNS + " turns with the " + t.name() + " tactic. You will need air pockets.";
+        warning = "Oxygen is tight with this tactic.";
         }
         boolean affordable = s.getCost() <= BUDGET;
         if (!affordable) warning = "Over budget: " + s.getCost() + " / " + BUDGET + ".";
@@ -142,7 +142,6 @@ public class DiveSimulator {
         offerRoutes();
     }
 
-        /** Event odds: 40% creature, 25% hazard, 22% loot, 7% air pocket, 6% strong current. */
     private Encounter rollEncounter() {
         int r = rng.nextInt(100);
         if (r < 40) return biome.createCreature();

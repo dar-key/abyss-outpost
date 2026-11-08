@@ -1,27 +1,14 @@
-/* ==========================================================================
-   Abyss Outpost: instruments (sonar scope, gauges, lamps, readouts).
-
-   app.js calls two hooks, nothing else is shared:
-     Instruments.update(state)     after every dive state from the backend
-     Instruments.noteRoute(index)  when the player picks a route (0, 1, 2)
-
-   Data used: depth, rated depth, oxygen, hull, route contacts, whether sonar
-   is fitted, and the chosen encounter.
-   Nothing here is invented: every dial, lamp and contact comes from the game state.
-   ========================================================================== */
 (function () {
   'use strict';
 
   const $ = (sel) => document.querySelector(sel);
   const SVGNS = 'http://www.w3.org/2000/svg';
-  const BEARINGS = [-50, 0, 50];            // Left, Ahead, Right (degrees from straight ahead)
-  const PERIOD = 6500;                      // one sweep, in ms
+  const BEARINGS = [-50, 0, 50];            
+  const PERIOD = 6500;                     
 
-  /* ---------- motion: follows the system "reduce motion" setting ------ */
   const fx = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-  /* ---------- analog gauges (SVG) ------------------------------------ */
-  const A0 = -125, A1 = 125;                // needle sweep, degrees from straight up
+  const A0 = -125, A1 = 125;              
 
   function polar(r, deg) {
     const a = (deg * Math.PI) / 180;
@@ -89,7 +76,7 @@
         val.textContent = text;
         g.last = v;
       },
-      shake() {                               // a cheap needle never sits perfectly still
+      shake() {                               
         if (!fx || g.last === undefined) return;
         jitter = (Math.random() - 0.5) * 1.6;
         g.set(g.last, val.textContent);
@@ -105,12 +92,11 @@
   gaugeDepth.set(0, '0'); gaugeOxygen.set(0, '-');
   setInterval(() => { gaugeDepth.shake(); gaugeOxygen.shake(); }, 900);
 
-  /* ---------- dive state -------------------------------------------- */
   const S = {
     state: null,
     sonarFitted: false,
     lastRoute: 1,
-    contacts: [],             // what the sonar shows
+    contacts: [],            
   };
 
   function seed(a, b) {
@@ -120,7 +106,7 @@
 
   function nice(v, step) { return Math.ceil(v / step) * step; }
 
-  function setLamp(id, level) {                 // level: 'off' | 'on' | 'warn' | 'crit'
+  function setLamp(id, level) {              
     const li = $(id);
     if (li) li.className = level === 'off' ? '' : level;
   }
@@ -134,7 +120,7 @@
         const s = seed(state.turn, r.index);
         let dist = 0.4 + s * 0.45;
         if (r.known && (r.kind === 'creature' || r.kind === 'hazard')) {
-          dist = Math.max(0.28, Math.min(0.8, 0.82 - r.danger / 55));   // closer = more dangerous
+          dist = Math.max(0.28, Math.min(0.8, 0.82 - r.danger / 55));  
         }
         out.push({ key: 't' + state.turn + 'r' + r.index, bearing: BEARINGS[r.index] || 0, dist,
                    kind: r.known ? r.kind : 'unknown', name: r.known ? r.name : '?', danger: r.danger, known: r.known });
@@ -158,7 +144,6 @@
     S.state = state;
     buildContacts(state);
 
-    /* gauges: depth (red zone = beyond rated depth) and oxygen */
     const depthMax = nice(state.maxDepth * 1.4, 50);
     gaugeDepth.configure({ max: depthMax, step: depthMax / 5, redFrom: state.maxDepth, redTo: depthMax });
     gaugeDepth.set(state.depth, String(state.depth));
@@ -166,7 +151,6 @@
                             fmt: (v) => Math.round(v) });
     gaugeOxygen.set(state.oxygen, String(state.oxygen));
 
-    /* lamps */
     const oxPct = (state.oxygen * 100) / state.oxygenMax;
     const hullPct = (state.hull * 100) / state.hullMax;
     setLamp('#lamp-oxygen', oxPct <= 15 ? 'crit' : oxPct <= 30 ? 'warn' : 'on');
@@ -174,7 +158,6 @@
     setLamp('#lamp-depth', state.depth > state.maxDepth ? 'crit' : state.depth > state.maxDepth * 0.85 ? 'warn' : 'on');
     setLamp('#lamp-sonar', S.sonarFitted ? 'on' : 'off');
 
-    /* contact list: the same real contacts, as text */
     const list = $('#contact-list');
     if (list) {
       list.textContent = S.contacts.length
@@ -191,7 +174,6 @@
     S.lastRoute = index;
   }
 
-  /* ---------- sonar scope (canvas) ----------------------------------- */
   const canvas = $('#sonar');
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0;
@@ -206,7 +188,7 @@
     W = r.width; H = r.height;
   }
 
-  const PH = '176,200,130';                     // phosphor colour (r,g,b)
+  const PH = '176,200,130';                   
   let lastTheta = 0, lastT = 0;
 
   function drawContact(c, cx, cy, R, alpha, t) {
@@ -216,9 +198,9 @@
     ctx.fillStyle = 'rgba(' + PH + ',' + alpha + ')';
     ctx.strokeStyle = 'rgba(' + PH + ',' + alpha + ')';
     ctx.lineWidth = 1.6;
-    if (c.kind === 'unknown') {                 // no sonar: a weak, flickering smudge
-      const flick = fx ? 0.55 + 0.45 * Math.random() : 0.8;
-      const g = ctx.createRadialGradient(x, y, 0, x, y, 20);
+    if (c.kind === 'unknown') {              
+    const flick = 0.8;      
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 20);
       g.addColorStop(0, 'rgba(' + PH + ',' + (alpha * 0.75 * flick) + ')');
       g.addColorStop(1, 'rgba(' + PH + ',0)');
       ctx.fillStyle = g;
@@ -229,10 +211,10 @@
       ctx.beginPath(); ctx.moveTo(x, y - 7); ctx.lineTo(x + 7, y); ctx.lineTo(x, y + 7); ctx.lineTo(x - 7, y); ctx.closePath(); ctx.stroke();
     } else if (c.kind === 'loot') {
       ctx.fillRect(x - 3.5, y - 3.5, 7, 7);
-    } else {                                    // event: double ring
+    } else {                                   
       ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, 8, 0, 7); ctx.stroke();
     }
-    if (c.locked) {                             // locked target: brackets
+    if (c.locked) {                            
       ctx.beginPath();
       [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([sx, sy]) => {
         ctx.moveTo(x + sx * 13, y + sy * 7); ctx.lineTo(x + sx * 13, y + sy * 13); ctx.lineTo(x + sx * 7, y + sy * 13);
@@ -241,7 +223,7 @@
     }
     if (alpha > 0.3 && c.name !== '?') {
       ctx.font = '10px ' + getComputedStyle(document.body).fontFamily;
-      const inward = Math.abs(x - cx) < R * 0.15 ? 1 : (x < cx ? 1 : -1);   // write the name toward the middle
+      const inward = Math.abs(x - cx) < R * 0.15 ? 1 : (x < cx ? 1 : -1); 
       ctx.textAlign = inward > 0 ? 'left' : 'right';
       ctx.fillText(c.name, x + inward * 12, y + (c.bearing < 0 ? -6 : c.bearing > 0 ? 14 : 3));
     }
@@ -249,13 +231,13 @@
 
   function frame(t) {
     requestAnimationFrame(frame);
-    if (!canvas.offsetParent) return;           // dive screen is hidden
+    if (!canvas.offsetParent) return;         
     const r = canvas.getBoundingClientRect();
     if (Math.abs(r.width - W) > 1) fit();
     if (!W) return;
 
     const cx = W / 2, cy = H / 2, R = W / 2 - 6;
-    const theta = ((t % PERIOD) / PERIOD) * 360;           // degrees clockwise from straight ahead
+    const theta = ((t % PERIOD) / PERIOD) * 360;          
     const crossed = (ang) => (lastTheta <= theta ? ang > lastTheta && ang <= theta : ang > lastTheta || ang <= theta);
 
     ctx.save();
@@ -263,7 +245,6 @@
     ctx.beginPath(); ctx.arc(cx, cy, R + 4, 0, 7); ctx.clip();
     ctx.fillStyle = '#0a0e08'; ctx.fillRect(0, 0, W, H);
 
-    /* rings, spokes, marks */
     ctx.lineWidth = 1;
     [0.25, 0.5, 0.75, 1].forEach((f, i) => {
       ctx.strokeStyle = 'rgba(' + PH + ',' + (i === 3 ? 0.55 : 0.28) + ')';
@@ -291,7 +272,6 @@
       ctx.fillText(s, cx + Math.sin(a) * (R - 14), cy - Math.cos(a) * (R - 14) + 3);
     });
 
-    /* afterglow wedge behind the sweep line */
     for (let i = 0; i < 36; i++) {
       const a0 = ((theta - (i + 1) * 1.6 - 90) * Math.PI) / 180;
       const a1 = ((theta - i * 1.6 - 90) * Math.PI) / 180;
@@ -302,10 +282,9 @@
     ctx.strokeStyle = 'rgba(' + PH + ',0.9)'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(sa) * R, cy + Math.sin(sa) * R); ctx.stroke();
 
-    /* real contacts: lit when the sweep passes, then they fade */
     S.contacts.forEach((c) => {
       if (crossed((c.bearing + 360) % 360)) c.lastHit = t;
-      const alpha = fx ? Math.max(c.kind === 'unknown' ? 0.35 : 0.12, 1 - (t - c.lastHit) / (PERIOD * 0.95)) : 0.9;
+      const alpha = 0.9;      
       drawContact(c, cx, cy, R, alpha, t);
     });
 
@@ -315,7 +294,6 @@
     }
     ctx.restore();
 
-    /* glass: scanlines and a dark edge */
     const g = ctx.createRadialGradient(cx, cy, R * 0.6, cx, cy, R + 6);
     g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.55)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
