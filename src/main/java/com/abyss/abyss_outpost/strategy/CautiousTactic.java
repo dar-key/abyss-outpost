@@ -12,12 +12,10 @@ public class CautiousTactic implements DiveTactic {
         return 10;
     }
 
-    public int successBonus(Action action) {
-        return switch (action) {
-            case SNEAK -> 10;
-            case FIGHT -> -5;
-            case FLEE -> 0;
-        };
+    @Override public int successBonus(Action action) {
+        if (action == Action.SNEAK) return 10;
+        if (action == Action.FIGHT) return -5;
+        return 0;
     }
 
     public double damageMultiplier() {

@@ -15,4 +15,5 @@ public abstract class SubUpgrade implements Submarine {
     @Override public int getAttack() { return inner.getAttack(); }
     @Override public int getHeatResistance() { return inner.getHeatResistance(); }
     @Override public int getCost() { return inner.getCost(); }
+    @Override public int getSonar() { return inner.getSonar(); }
 }

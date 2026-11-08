@@ -1,36 +1,6 @@
-/* ==========================================================================
-   Abyss Outpost: page skeleton script
-
-   Who edits what:
-     P1  renderSpec()   + the Dock form (readDock, spec refresh)
-     P2  renderState()  + the dive screen (bars, encounter, log, action buttons)
-     P3  renderReport() + the debrief screen, and the JSON the backend returns
-
-   Right now the backend is a placeholder and answers {"status":"TODO ..."}.
-   Every render function therefore falls back to printing the raw JSON, so the
-   page works end to end before any pattern exists.
-
-   PROPOSED JSON SHAPES (agree them with P3 before relying on them):
-
-   POST /api/build, response (spec sheet)
-     { description, hull, maxDepth, oxygen, light, attack, heatResistance,
-       cost, budget, affordable, warning }   (warning: text or "")
-
-   POST /api/dive/start and POST /api/dive/step, response (dive state)
-     { biome, biomeId, tactic, turn, totalTurns, depth, maxDepth,
-       oxygen, oxygenMax, hull, hullMax, loot, over, outcome,
-       encounter: { kind, emoji, name, danger, reward } | null,
-       events: [ { type, message, level, value } ] }
-
-   GET /api/report, response (debrief)
-     { outcome, score, loot, depth, hullLeft, oxygenLeft, turns,
-       submarine, biome, tactic, creatures: [..], items: [..] }
-   ========================================================================== */
-
 const $  = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-/* ---------- small helpers ---------------------------------------------- */
 
 function show(name) {
   $$('.screen').forEach((s) => s.classList.toggle('active', s.id === 'screen-' + name));
@@ -50,13 +20,12 @@ function log(message, level = 'info') {
   const box = $('#log');
   const line = document.createElement('div');
   line.className = 'line ' + level;
-  const mark = { warn: '! ', danger: '!! ' };   // plain text marks instead of colours
+  const mark = { warn: '! ', danger: '!! ' };  
   line.textContent = (mark[level] || '') + message;
   box.appendChild(line);
   box.scrollTop = box.scrollHeight;
 }
 
-/* A bar needs --v (0 to 100). Under 30% it turns amber, under 15% red and blinks. */
 function setBar(sel, value, max) {
   const bar = $(sel);
   const pct = max > 0 ? Math.max(0, Math.min(100, Math.round((value * 100) / max))) : 0;
@@ -71,7 +40,6 @@ function showRaw(preSel, data) {
   pre.textContent = JSON.stringify(data, null, 2);
 }
 
-/* ---------- P1: DOCK -------------------------------------------------- */
 
 function readDock() {
   return {
@@ -86,7 +54,7 @@ function readDock() {
 }
 
 function renderSpec(spec) {
-  if (spec.maxDepth === undefined) {          // placeholder backend: show raw JSON
+  if (spec.maxDepth === undefined) {        
     showRaw('#spec-raw', spec);
     return;
   }
@@ -101,7 +69,6 @@ function renderSpec(spec) {
   $('#spec-attack').textContent = spec.attack;
   $('#spec-heat').textContent = spec.heatResistance + '%';
   $('#spec-cost').textContent = spec.cost + ' / ' + spec.budget;
-  // budget bar: the opposite of oxygen, a FULL bar is the danger
   const budget = $('#bar-budget');
   budget.style.setProperty('--v', Math.min(100, Math.round((spec.cost * 100) / spec.budget)));
   budget.classList.toggle('warn', spec.affordable && spec.cost > spec.budget * 0.85);
@@ -118,10 +85,8 @@ function refreshSpec() {
   }, 200);
 }
 
-/* ---------- P2: DIVE -------------------------------------------------- */
-
 function renderState(state) {
-  if (state.depth === undefined) {            // placeholder backend: show raw JSON
+  if (state.depth === undefined) {         
     log(JSON.stringify(state), 'info');
     return;
   }
@@ -134,15 +99,51 @@ function renderState(state) {
   $('#tactic-label').textContent = 'Tactic: ' + state.tactic + ' · ' + state.biome;
 
   const enc = state.encounter;
-  $('#encounter-name').textContent = enc ? enc.name : 'Nothing ahead';
+  const routes = state.routes || [];
+  renderRoutes(routes, state.over);
+  $('#encounter-name').textContent = enc ? enc.name : (routes.length ? 'Choose a route' : 'Nothing ahead');
   $('#encounter-tags').textContent = enc
     ? [enc.kind, enc.danger > 0 ? 'danger ' + enc.danger : '', enc.reward > 0 ? 'reward ' + enc.reward : '']
         .filter(Boolean).join(' · ')
     : '';
 
   (state.events || []).forEach((ev) => log(ev.message, ev.level));
-  $$('#actions [data-action]').forEach((b) => (b.disabled = state.over));
+    $$('#actions [data-action]').forEach((b) => (b.disabled = state.over || !enc));
+  if (window.Instruments) Instruments.update(state);
+  }
+
+function describeRoute(r) {
+  if (r.kind === 'creature') return 'creature, danger ' + r.danger + ', reward ' + r.reward;
+  if (r.kind === 'hazard') return 'hazard, danger ' + r.danger;
+  if (r.kind === 'loot') return 'loot, reward ' + r.reward;
+  return 'event';
 }
+
+function renderRoutes(routes, over) {
+  const holder = $('#routes');
+  holder.replaceChildren();
+  $('#routes-box').hidden = over || routes.length === 0;
+  routes.forEach((r) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = (r.index + 1) + '. ' + r.label + ': ' +
+      (r.known ? r.name + ' (' + describeRoute(r) + ')' : 'unknown');
+    b.addEventListener('click', () => takeRoute(r.index));
+    holder.appendChild(b);
+  });
+}
+
+async function takeRoute(index) {
+  try {
+    const state = await api('/dive/route', { route: index });
+    if (window.Instruments) Instruments.noteRoute(index);
+    renderState(state);
+    if (state.over) await loadReport();
+  } catch (e) {
+    log('Error: ' + e.message, 'danger');
+  }
+}
+
 
 async function takeAction(action) {
   try {
@@ -154,10 +155,9 @@ async function takeAction(action) {
   }
 }
 
-/* ---------- P3: DEBRIEF ------------------------------------------------ */
 
 function renderReport(r) {
-  if (r.score === undefined) {                // placeholder backend: show raw JSON
+  if (r.score === undefined) {             
     showRaw('#rep-raw', r);
     return;
   }
@@ -190,8 +190,6 @@ async function loadReport() {
   catch (e) { showRaw('#rep-raw', { error: e.message }); }
   show('debrief');
 }
-
-/* ---------- start-up and wiring --------------------------------------- */
 
 async function ping() {
   const chip = $('#link-status');
@@ -226,36 +224,13 @@ $('#again').addEventListener('click', () => show('dock'));
 
 document.addEventListener('keydown', (e) => {
   if (!$('#screen-dive').classList.contains('active')) return;
+    if (!$('#routes-box').hidden) {               
+    const index = { '1': 0, '2': 1, '3': 2 }[e.key];
+    if (index !== undefined) takeRoute(index);
+    return;
+  }
   const action = { '1': 'SNEAK', '2': 'FIGHT', '3': 'FLEE' }[e.key];
   if (action) takeAction(action);
-});
-
-/* ---------- developer bar: look at each screen without the backend ----- */
-
-$$('.devbar [data-go]').forEach((b) => b.addEventListener('click', () => show(b.dataset.go)));
-
-$('#dev-fake').addEventListener('click', () => {
-  renderSpec({ description: 'Titanium hull · Efficient engine · Searchlight · Plasma cutter',
-               hull: 100, maxDepth: 450, oxygen: 135, light: 3, attack: 4, heatResistance: 0,
-               cost: 570, budget: 600, affordable: true,
-               warning: 'Not enough oxygen for 8 turns with the Greedy tactic.' });
-  $('#log').replaceChildren();
-  renderState({ biome: 'Magma Depths', biomeId: 'LAVA', tactic: 'Greedy', turn: 5, totalTurns: 8,
-                depth: 250, maxDepth: 450, oxygen: 28, oxygenMax: 135, hull: 54, hullMax: 100, loot: 61,
-                over: false, outcome: 'DIVING',
-                encounter: { kind: 'creature', name: 'Magma Squid', danger: 16, reward: 22 },
-                events: [
-                  { type: 'LOG', level: 'info',   message: 'Launching into the Magma Depths with the Greedy tactic.' },
-                  { type: 'DEPTH', level: 'info',  message: 'Turn 5/8: depth 250 m.' },
-                  { type: 'LOG', level: 'good',   message: 'You snatch the Fire Crystal. +56' },
-                  { type: 'LOG', level: 'warn',   message: 'Oxygen low: 20%' },
-                  { type: 'LOG', level: 'danger', message: 'The Ember Eel gets the better of you: -26 hull.' },
-                  { type: 'LOG', level: 'warn',   message: 'Ahead: Magma Squid.' },
-                ] });
-  renderReport({ outcome: 'SURFACED', score: 168, loot: 61, depth: 400, hullLeft: 54, oxygenLeft: 12, turns: 8,
-                 submarine: 'Titanium hull · Efficient engine · Searchlight · Plasma cutter',
-                 biome: 'Magma Depths', tactic: 'Greedy',
-                 creatures: ['Magma Squid', 'Ember Eel'], items: ['Fire Crystal (+56)', 'Obsidian Shard (+25)'] });
 });
 
 ping();

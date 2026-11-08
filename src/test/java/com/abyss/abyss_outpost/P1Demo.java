@@ -11,14 +11,12 @@ import java.util.List;
 public class P1Demo {
 
     public static void main(String[] args) {
-        // 1. Build and test default sub
         Submarine defaultSub = new SubmarineBuilder().build();
         System.out.println("Default sub: " + defaultSub.getDescription());
         System.out.printf("hull=%d depth=%d oxygen=%d light=%d attack=%d cost=%d%n",
                 defaultSub.getHull(), defaultSub.getMaxDepth(), defaultSub.getOxygen(),
                 defaultSub.getLight(), defaultSub.getAttack(), defaultSub.getCost());
 
-        // 2. Build and test maxed custom sub
         Submarine customSub = new SubmarineBuilder()
                 .hull(SubmarineBuilder.Hull.TITANIUM)
                 .engine(SubmarineBuilder.Engine.EFFICIENT)
@@ -30,7 +28,6 @@ public class P1Demo {
                 customSub.getHull(), customSub.getMaxDepth(), customSub.getOxygen(),
                 customSub.getLight(), customSub.getAttack(), customSub.getCost());
 
-        // 3. Test Biome Factories
         List<BiomeFactory> factories = List.of(new ShallowsFactory(), new LavaFactory());
         for (BiomeFactory factory : factories) {
             System.out.printf("%n== %s (%d m/turn) ==%n", factory.name(), factory.depthStep());
